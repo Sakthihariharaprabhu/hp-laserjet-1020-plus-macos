@@ -32,7 +32,7 @@ upload_firmware() {
   if [ "$was_enabled" -eq 1 ]; then /usr/sbin/cupsdisable "$QUEUE" || return 1; : > "$PAUSED_MARKER"; fi
   /usr/bin/logger -t "$LOG_TAG" "Uploading firmware to $QUEUE after USB detection."
   request=$(/usr/bin/lp -d "$RAW_QUEUE" -o raw "$FIRMWARE" 2>&1) || { /usr/bin/logger -t "$LOG_TAG" "Firmware job could not be queued: $request"; return 1; }
-  job=$(printf '%s\n' "$request" | /usr/bin/sed -n 's/.*request id is \\([^ ]*\\).*/\\1/p')
+  job=$(printf '%s\n' "$request" | /usr/bin/sed -n 's/.*request id is \([^ ]*\).*/\1/p')
   [ -n "$job" ] || { /usr/bin/logger -t "$LOG_TAG" 'Could not identify firmware job; leaving main queue paused for safety.'; return 1; }
   tries=0
   while /usr/bin/lpstat -o "$RAW_QUEUE" 2>/dev/null | /usr/bin/grep -F "$job" >/dev/null 2>&1; do
@@ -40,6 +40,10 @@ upload_firmware() {
     if [ "$tries" -ge 90 ] || ! is_present; then /usr/bin/logger -t "$LOG_TAG" 'Firmware upload timed out or printer disconnected; leaving main queue paused.'; return 1; fi
     /bin/sleep 1
   done
+  # A disappearing queue entry is not proof of successful delivery. Only resume
+  # the print queue if CUPS records this exact job as completed.
+  completed=$(/usr/bin/lpstat -W completed -o "$RAW_QUEUE" 2>/dev/null | /usr/bin/grep -F "$job" || true)
+  [ -n "$completed" ] || { /usr/bin/logger -t "$LOG_TAG" 'Firmware job left the queue without a completion record; leaving main queue paused.'; return 1; }
   if [ "$was_enabled" -eq 1 ]; then /usr/sbin/cupsenable "$QUEUE" || return 1; /bin/rm -f "$PAUSED_MARKER"; fi
   /usr/bin/logger -t "$LOG_TAG" "Firmware job completed for $QUEUE."
   return 0
@@ -52,7 +56,7 @@ while :; do
   if is_present; then
     if [ "$last" != present ]; then
       if upload_firmware; then last=present; printf present > "$STATE"
-      else last=retry; printf retry > "$STATE"; /bin/sleep 30; fi
+      else last=present; printf failed > "$STATE"; fi
     fi
   else last=absent; printf absent > "$STATE"; fi
   /bin/sleep 5

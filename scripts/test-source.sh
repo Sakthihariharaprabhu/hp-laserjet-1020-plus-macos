@@ -70,4 +70,8 @@ fi
 grep -q 'EXPECTED_SHA256=c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01' "$ROOT/firmware/setup-firmware.sh"
 grep -q 'EXPECTED=c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01' "$ROOT/firmware/firmware-watch.sh"
 
+if grep -Fq '\\n' "$ROOT/scripts/collect-source-archives.sh"; then
+  echo "Source archive manifest must use real line breaks, not escaped literal backslash-n text." >&2
+  exit 1
+fi
 echo "Static source checks passed (not a build or print test)."

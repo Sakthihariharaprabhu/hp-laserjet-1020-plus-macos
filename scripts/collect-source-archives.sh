@@ -18,10 +18,10 @@ for formula in ghostscript jbigkit gnu-sed dylibbundler bc; do
   formula_file="$OUT/$formula.homebrew-formula.rb"
   brew cat "$formula" > "$formula_file"
   formula_sha=$(shasum -a 256 "$formula_file" | awk '{print $1}')
-  printf 'Fetching %s %s source archive\\n' "$formula" "$version"
+  printf 'Fetching %s %s source archive\n' "$formula" "$version"
   curl --fail --location --silent --show-error "$url" -o "$dest"
   actual=$(shasum -a 256 "$dest" | awk '{print $1}')
   [ "$actual" = "$sha" ] || { echo "Checksum mismatch for $formula source archive" >&2; exit 1; }
-  printf '%s %s\\n  URL: %s\\n  Source SHA-256: %s\\n  Source file: %s\\n  Homebrew formula: %s (SHA-256 %s)\\n\\n' "$formula" "$version" "$url" "$sha" "$(basename "$dest")" "$(basename "$formula_file")" "$formula_sha" >> "$MANIFEST"
+  printf '%s %s\n  URL: %s\n  Source SHA-256: %s\n  Source file: %s\n  Homebrew formula: %s (SHA-256 %s)\n\n' "$formula" "$version" "$url" "$sha" "$(basename "$dest")" "$(basename "$formula_file")" "$formula_sha" >> "$MANIFEST"
 done
-printf '%s\\n' 'The source archives above are the exact Homebrew stable source archives selected for this build. Review each archive license and dependency notices before redistribution.' >> "$MANIFEST"
+printf '%s\n' 'The source archives above are the exact Homebrew stable source archives selected for this build. Review each archive license and dependency notices before redistribution.' >> "$MANIFEST"

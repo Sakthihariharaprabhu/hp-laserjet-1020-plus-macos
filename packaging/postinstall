@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+STAGE=/Library/Printers/hp-legacy-mac-package
+[ -x "$STAGE/install.sh" ] || { echo 'HP LaserJet package payload is incomplete.' >&2; exit 1; }
+/bin/sh "$STAGE/install.sh"
+# Keep the staged installer only if installation failed; it is useful for recovery.
+/bin/rm -rf "$STAGE"
+exit 0

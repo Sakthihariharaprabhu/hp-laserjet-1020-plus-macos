@@ -1,30 +1,35 @@
-# Build status — engineering candidate
+# Build status — engineering test candidate
 
-Date: 2026-10-25
+Last checked: 2026-10-25
 
-## Confirmed
+## Latest confirmed CI build
 
-- GitHub Actions produced a native Apple Silicon ARM64 unsigned installer package in run 5.
-- The downloaded artifact ZIP checksum matched GitHub's published artifact digest.
-- The package contains ARM64 Mach-O driver binaries and a GUI firmware setup app.
-- The previous package was inspected by extracting its package payload.
-- Review found issues in the earlier package: it targeted the same installed driver/filter paths as the legacy installation, had fragile PPD checks/config parsing, and treated a disappearing firmware job as success.
-- Source changes have been committed to isolate the candidate paths, correct PPD parsing, harden firmware completion handling, and update GitHub Actions to Node.js 24-compatible action versions.
+- Workflow run: [#21 — Build macOS candidate](https://github.com/Sakthihariharaprabhu/hp-laserjet-1020-plus-macos/actions/runs/40209197664)
+- Branch: `main`
+- Source commit built: `2f7666359e2a127e7bb82bd8612181d2fc098bdf`
+- Result: **success**
+- Artifact: `hp-laserjet-1020-plus-macos-arm64-candidate`
+- Artifact ID: `12604783804`
+- Artifact ZIP SHA-256: `237b441377a433d22001d81c432c82734aab0b68b53299787ccbd8a86bffe9c4`
+- Artifact expiry: 2026-11-08 15:56 UTC
 
-## Critical artifact status
+## What the successful run establishes
 
-The previously built artifact is stale relative to the reviewed source fixes. **Do not install the earlier artifact.** A new native build and package inspection are required before any user test.
+- The workflow ran on an Apple Silicon ARM64 macOS runner.
+- The pinned driver bundle was built.
+- Static/source checks and bundle checks passed.
+- The bundled Ghostscript-to-`foo2zjs` conversion pipeline generated a non-empty test stream.
+- An unsigned candidate installer package and checksum sidecar were uploaded as a workflow artifact.
 
-## Remaining blockers before green light
+## What it does not establish
 
-- Confirm the updated GitHub Actions workflow runs successfully and the Node.js 20 warning is gone.
-- Inspect the newly built package payload and verify its checksums.
-- Verify the new installer only creates the isolated candidate queue and never modifies the legacy driver's paths.
-- Re-run static shell checks and bundle checks against the exact current source.
-- Confirm firmware watcher completion/failure behavior and that queue recovery is understandable to a nontechnical user.
-- Review package license notices/source archives for private testing and ensure firmware remains excluded.
-- Physical print test on macOS 26.6.2 (Apple Silicon), including firmware setup, USB reconnect/power cycle, A4 alignment, and recovery/uninstall.
+- The installer has not been validated end-to-end on a physical Mac.
+- Printing to a physical HP LaserJet 1020 / 1020 Plus has not been confirmed.
+- Firmware acquisition, firmware upload after power cycle, LaunchDaemon behavior, USB/CUPS queue management and recovery paths have not been physically validated.
+- The package is not signed or notarized and is not ready for general distribution.
 
-## Important
+The artifact ZIP checksum above applies to the downloaded **Actions ZIP**, not to the individual `.pkg`. Use the sidecar `.sha256` inside the artifact to verify the package itself.
 
-This remains an engineering candidate, not a release. No physical test has been performed on the user's Mac. The user should not install any artifact until a fresh build is reviewed and an explicit green light is given.
+## Current decision
+
+**Engineering test candidate only.** Do not describe it as a stable driver or confirmed macOS 26-compatible release. See [test instructions](TESTING.md), [security notes](docs/SECURITY.md), and the [release checklist](docs/RELEASE-CHECKLIST.md).

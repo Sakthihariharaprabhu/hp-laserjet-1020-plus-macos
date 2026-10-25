@@ -1,57 +1,48 @@
 # HP LaserJet 1020 Plus for modern macOS (Apple Silicon)
 
-**Engineering candidate — not yet a verified release.** This repository is intended for the HP LaserJet 1020 / 1020 Plus over USB on Apple Silicon Macs, including the macOS 26 family. The driver pipeline is based on OpenPrinting `foo2zjs` and Ghostscript.
+> **Private test candidate — not a verified release.** Automated build checks pass, but the installer, firmware workflow, USB/CUPS behavior, and physical printing have not yet been validated end-to-end on a real target Mac and printer.
 
-The source and installer are being prepared for a real Mac test. They have **not** been tested end-to-end on macOS 26.6.2 in this build environment. Do not treat a successful script check as proof that printing works.
+This project explores USB printing support for the HP LaserJet 1020 / 1020 Plus on Apple Silicon Macs, including macOS 26, using OpenPrinting `foo2zjs` and Ghostscript.
 
-## What is and is not included
+## Current test status
 
-- Open-source driver source is fetched at a pinned commit by the build script.
-- The build creates a local `dist/bundle` with the 1020 PPD, `foo2zjs` wrapper, Ghostscript, resources and required libraries.
-- HP's proprietary `sihp1020.dl` firmware binary is **not stored in the repository or embedded in the installer**. The included GUI setup app can automatically retrieve the source image over HTTPS from the community mirror referenced by OpenPrinting's `foo2zjs`, convert it locally, and install it only if the output matches the reviewed SHA-256. Internet access is required for automatic setup; selecting an existing local firmware file remains available. The mirror is a community source, not HP support.
-- The installer refuses to proceed if the built bundle is incomplete.
-- No firmware, printer serial number, or personal machine paths are intentionally committed.
+GitHub Actions run [#21](https://github.com/Sakthihariharaprabhu/hp-laserjet-1020-plus-macos/actions/runs/40209197664) completed successfully on `main` for source commit `2f7666359e2a127e7bb82bd8612181d2fc098bdf`. It built an ARM64 candidate and passed source/bundle checks and a native conversion-pipeline smoke test. Those checks **do not prove** that macOS will install the package or that a real printer will print correctly.
 
-## Build requirements (developer step)
+Use the [test instructions](TESTING.md) before attempting a supervised test. The current package is unsigned and not notarized. Do not disable Gatekeeper, SIP, or system security protections. If macOS reports that the package contains malware, is damaged, or will damage the computer, stop and record the exact warning. If it says only that the developer cannot be verified, review the source and ask the maintainer before deciding what to do.
 
-On an Apple Silicon Mac: Xcode Command Line Tools, Homebrew, Git, and internet access. The build script installs these Homebrew packages if missing: `ghostscript`, `jbigkit`, `gnu-sed`, `dylibbundler`, and `bc` (for `dc`). Review the script before running it. It builds the driver from the pinned OpenPrinting revision and bundles the Ghostscript runtime so the CUPS sandbox does not depend on Homebrew paths.
+## What is included
+
+- OpenPrinting driver source fetched at a pinned commit during the build.
+- A locally built bundle containing the 1020-family PPD, `foo2zjs` wrapper, Ghostscript resources and required libraries.
+- A separate candidate install path and CUPS filter (`hp-legacy-mac-plus`) intended not to overwrite the earlier `hp-legacy-mac` installation.
+- A GUI firmware setup app source, with automatic retrieval/conversion from the community mirror referenced by OpenPrinting's `foo2zjs` helper **or** selection of a local `.dl` firmware file. Both paths check the converted firmware against a reviewed SHA-256 before installation.
+
+HP's proprietary `sihp1020.dl` binary is not committed to this repository or embedded in the installer. Automatic firmware retrieval uses a third-party community mirror, not an official HP download endpoint. A matching checksum establishes that the output matches the expected bytes; it does not establish the mirror's trustworthiness or grant legal rights to use/redistribute firmware. Internet access is needed for the automatic path.
+
+## For maintainers: build requirements
+
+On an Apple Silicon Mac, install Xcode Command Line Tools, Homebrew and Git. The build script may install Homebrew packages if missing: `ghostscript`, `jbigkit`, `gnu-sed`, `dylibbundler`, and `bc` (for `dc`). Review the scripts before running them.
 
 ```sh
 sh build/build-bundle.sh
 sh scripts/check-bundle.sh dist/bundle
+sh scripts/test-source.sh
+sh scripts/smoke-driver-pipeline.sh dist/bundle
 ```
 
-The build script is for maintainers. The packaging script now creates a GUI firmware-setup app and an installer-package candidate. Signing/notarization still requires Developer ID certificates and a configured Apple notary profile; the GUI and installer are not yet validated on macOS.
+GitHub Actions runs on an Apple Silicon macOS runner and publishes an unsigned candidate artifact. The successful pipeline is build/static/runtime-smoke evidence only, not physical-printer validation.
 
-## Install (engineering candidate only)
+## Installation and firmware notes
 
-The installer requires administrator privileges and creates a separate candidate driver directory and CUPS filter (`hp-legacy-mac-plus`) so it does not overwrite the earlier `hp-legacy-mac` installation. Do not run it until the candidate has passed review and local print testing.
+Do not use the source checkout's `sudo sh install.sh` command as a casual end-user installation instruction. It is a source-level/manual install path for reviewers. For a test, use only a clearly identified package attached to a GitHub test pre-release after checking its release notes and checksum; do not use an old Actions artifact.
 
-```sh
-sudo sh install.sh
-```
+The candidate normally creates a queue named `HP_LaserJet_1020_Plus_Candidate` unless `HP_LEGACY_QUEUE` is set. If that name already exists, the installer should exit rather than change installed files. The firmware setup and LaunchDaemon/raw-queue workflow is not yet physically tested and may require troubleshooting.
 
-It creates a queue named `HP_LaserJet_1020_Plus_Candidate` unless `HP_LEGACY_QUEUE` is set. If that name already exists, it exits before changing installed files. It does not automatically send firmware and does not change SIP, Gatekeeper, or system USB backend permissions.
+## Known limitations before general distribution
 
-## Firmware after power-on
+- No end-to-end physical print test has been completed on macOS 26.6.2 (build 25G83) with an Apple Silicon Mac and HP LaserJet 1020 Plus.
+- The unsigned, non-notarized candidate is not suitable for broad distribution to ordinary users.
+- Firmware acquisition/use rights, signing/notarization, dependency-license compliance, installer rollback, CUPS behavior, USB device matching and failure recovery still require review/testing.
+- Paper geometry is configured for A4 by default; actual margins and clipping need a physical test.
 
-The HP LaserJet 1020 family needs its firmware uploaded after each printer power-on. This project does not redistribute or download HP firmware. The package includes a double-clickable **HP LaserJet Firmware Setup** app source. It can automatically download and convert the firmware from the upstream community mirror, or accept a local `.dl` file. Both methods validate the reviewed SHA-256 before requesting administrator authorization and configuring a launchd monitor. Automatic acquisition requires internet access. The monitor is designed to send the firmware through a separate raw queue when USB is detected or re-detected, temporarily pausing the normal queue during upload. This workflow is not yet physically tested; do not consider it release-ready until power-cycle, raw-queue, failure, and recovery tests pass. See `docs/FIRMWARE-WORKFLOW.md`.
-
-## Known limitations before release
-
-- No physical print test has been performed by the project maintainer on macOS 26.6.2.
-- The build has not yet been executed on a real Apple Silicon Mac in this workspace.
-- The current engineering candidate is an unsigned, non-notarized preview. A successful build verifies the source checks and packaging pipeline, not actual print compatibility. Only use a newly generated artifact for a supervised private test after reviewing its digest; do not treat it as a general-distribution release.
-- The GUI firmware setup and launchd automation are source-level candidates; CUPS/USB behavior still needs a Mac test.
-- Firmware acquisition/use rights and the final non-terminal workflow need review.
-- The installer/filter rollback and CUPS interactions require failure-injection tests on a disposable Mac.
-
-See [Security notes](docs/SECURITY.md) and [release checklist](docs/RELEASE-CHECKLIST.md).
-
-## Current engineering status
-
-This repository candidate is source-level work in progress, not a release. The build must run on an Apple Silicon macOS runner; a Linux shell cannot validate macOS framework, CUPS, launchd, or Mach-O runtime behavior. The build workflow is intended to generate an unsigned candidate artifact for review. A public distribution release requires a Developer ID Application signature for the GUI app, a Developer ID Installer signature for the package, and Apple notarization. See `docs/RELEASE-CHECKLIST.md` and `docs/FIRMWARE-WORKFLOW.md`.
-
-The PPD normalizer sets A4 as the default page size, region, imageable area, and paper dimension, while preserving the upstream A4 printable margins. This is intended to prevent Letter/A4 layout mismatches; actual top-edge clipping and bottom whitespace still require a physical print test.
-
-See `docs/BUILD-AND-SIGNING.md` for native build and Developer ID signing requirements.
+See [test instructions](TESTING.md), [security notes](docs/SECURITY.md), [firmware workflow](docs/FIRMWARE-WORKFLOW.md), [release checklist](docs/RELEASE-CHECKLIST.md), [build status](BUILD-STATUS.md), and [test release notes template](docs/TEST-RELEASE-NOTES.md).

@@ -1,0 +1,40 @@
+name: Build macOS candidate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-arm64:
+    # GitHub documents macos-15 as an Apple Silicon arm64 hosted runner.
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - name: Check out project
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Confirm runner architecture
+        run: |
+          test "$(uname -s)" = Darwin
+          test "$(uname -m)" = arm64
+      - name: Build pinned driver bundle
+        run: sh build/build-bundle.sh
+      - name: Validate bundle and source
+        run: |
+          sh scripts/test-source.sh
+          sh scripts/check-bundle.sh dist/bundle
+      - name: Build installer candidate
+        run: sh packaging/build-release.sh
+      - name: Publish candidate as workflow artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: hp-laserjet-1020-plus-macos-arm64-candidate
+          path: |
+            dist/*.pkg
+            dist/*.sha256
+            dist/source-code/**
+          if-no-files-found: error
+          retention-days: 14

@@ -30,7 +30,7 @@ if lpstat -p "$QUEUE" >/dev/null 2>&1; then
   else echo "Queue '$QUEUE' does not have both this driver's PPD and config markers; leaving it untouched."; exit 1; fi
 elif [ "$OWNED" -eq 1 ]; then rm -f "$OWNED_CONF"; fi
 
-LABEL="com.hp-legacy-mac.firmware-watch.$QUEUE"
+LABEL="com.hp-legacy-mac-plus.firmware-watch.$QUEUE"
 PLIST="/Library/LaunchDaemons/$LABEL.plist"
 if [ -f "$PLIST" ] && command -v plutil >/dev/null 2>&1; then
   WATCH_QUEUE=$(plutil -extract ProgramArguments.1 raw -o - "$PLIST" 2>/dev/null || true)
@@ -45,8 +45,8 @@ fi
 
 if [ -d "$BASE/queues" ] && [ -z "$(find "$BASE/queues" -type f -name '*.conf' -print -quit)" ]; then rmdir "$BASE/queues" 2>/dev/null || true; fi
 if [ -d "$BASE" ] && [ -z "$(find "$BASE" -mindepth 1 -maxdepth 1 -print -quit)" ]; then rmdir "$BASE"; fi
-if [ -f "$FILTER" ] && grep -q 'hp-legacy-mac' "$FILTER"; then rm -f "$FILTER"; fi
+if [ -f "$FILTER" ] && grep -q 'hp-legacy-mac-plus' "$FILTER"; then rm -f "$FILTER"; fi
 if [ -f /Library/Printers/hp-legacy-mac-plus/firmware/sihp1020.dl ]; then
-  if ! find /Library/LaunchDaemons -maxdepth 1 -name 'com.hp-legacy-mac.firmware-watch.*.plist' -print 2>/dev/null | grep . >/dev/null 2>&1; then rm -rf /Library/Printers/hp-legacy-mac-plus/firmware; fi
+  if ! find /Library/LaunchDaemons -maxdepth 1 -name 'com.hp-legacy-mac-plus.firmware-watch.*.plist' -print 2>/dev/null | grep . >/dev/null 2>&1; then rm -rf /Library/Printers/hp-legacy-mac-plus/firmware; fi
 fi
 echo "Removed only the confirmed hp-legacy-mac-plus candidate queue and associated driver files."

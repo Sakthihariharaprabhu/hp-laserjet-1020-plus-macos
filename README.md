@@ -41,7 +41,7 @@ The HP LaserJet 1020 family needs its firmware uploaded after each printer power
 
 - No physical print test has been performed by the project maintainer on macOS 26.6.2.
 - The build has not yet been executed on a real Apple Silicon Mac in this workspace.
-- An unsigned `.pkg` was produced by GitHub Actions for an earlier source revision. Since subsequent review fixes changed installer and firmware logic, that artifact is stale and must not be installed; a fresh build is required.
+- The current engineering candidate is an unsigned, non-notarized preview. A successful build verifies the source checks and packaging pipeline, not actual print compatibility. Only use a newly generated artifact for a supervised private test after reviewing its digest; do not treat it as a general-distribution release.
 - The GUI firmware setup and launchd automation are source-level candidates; CUPS/USB behavior still needs a Mac test.
 - Firmware acquisition/use rights and the final non-terminal workflow need review.
 - The installer/filter rollback and CUPS interactions require failure-injection tests on a disposable Mac.

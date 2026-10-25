@@ -17,6 +17,8 @@ grep -q '^FOO2ZJS_COMMIT=80499ed5bf6caa2963ad337e37cfda78a80aab1e$' "$ROOT/build
 grep -Fq 'cp "$ROOT/uninstall.sh" "$APP/Contents/Resources/uninstall.sh"' "$ROOT/packaging/build-release.sh"
 grep -Fq 'set actionChoices to {"Set Up Firmware", "Uninstall Candidate Driver"}' "$ROOT/firmware/setup-firmware.applescript"
 grep -Fq 'find "$APP" -type d -exec chmod 755' "$ROOT/packaging/build-release.sh"
+grep -Fq 'find "$APP" -type f -exec chmod 644' "$ROOT/packaging/build-release.sh"
+grep -Fq 'chmod 755 "$APP/Contents/Resources/uninstall.sh"' "$ROOT/packaging/build-release.sh"
 grep -Fq 'find "$APP/Contents/MacOS" -type f -exec chmod 755' "$ROOT/packaging/build-release.sh"
 grep -Fq 'find "$STAGE" -type d -exec chmod 755' "$ROOT/packaging/build-release.sh"
 grep -Fq '/usr/bin/ditto "$APP" "$STAGE/Applications/HP LaserJet Firmware Setup.app"' "$ROOT/packaging/build-release.sh"

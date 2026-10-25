@@ -39,9 +39,9 @@ cp "$WORK/app/Contents/Resources/firmware/"* "$APP/Contents/Resources/firmware/"
 cp "$ROOT/uninstall.sh" "$APP/Contents/Resources/uninstall.sh"
 # Normalize the GUI app's permissions before signing; umask 077 otherwise makes
 # the applet and metadata owner-only and prevents a normal user from launching it.
-find "$APP" -type d -exec chmod 755 {} \\;
-find "$APP" -type f -exec chmod 644 {} \\;
-find "$APP/Contents/MacOS" -type f -exec chmod 755 {} \\;
+find "$APP" -type d -exec chmod 755 {} \;
+find "$APP" -type f -exec chmod 644 {} \;
+find "$APP/Contents/MacOS" -type f -exec chmod 755 {} \;
 chmod 755 "$APP/Contents/Resources/uninstall.sh"
 if [ -n "${DEVELOPER_ID_APPLICATION:-}" ]; then
   /usr/bin/codesign --force --options runtime --timestamp --sign "$DEVELOPER_ID_APPLICATION" "$APP"
@@ -52,7 +52,7 @@ cp "$ROOT/packaging/postinstall" "$WORK/scripts/postinstall"
 chmod 755 "$WORK/scripts/postinstall"
 # The staging umask is deliberately private; package install directories must not
 # inherit mode 0700. Normalize every payload directory, but preserve app file modes.
-find "$STAGE" -type d -exec chmod 755 {} \\;
+find "$STAGE" -type d -exec chmod 755 {} \;
 [ -x "$STAGE/Applications/HP LaserJet Firmware Setup.app/Contents/MacOS/applet" ] || { echo 'Firmware setup applet is not executable.' >&2; exit 1; }
 [ -r "$STAGE/Applications/HP LaserJet Firmware Setup.app/Contents/Info.plist" ] || { echo 'Firmware setup app metadata is unreadable.' >&2; exit 1; }
 [ -x "$STAGE/Applications/HP LaserJet Firmware Setup.app/Contents/Resources/uninstall.sh" ] || { echo 'GUI uninstaller helper is not executable.' >&2; exit 1; }

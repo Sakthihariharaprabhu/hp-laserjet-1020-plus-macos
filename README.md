@@ -1,6 +1,6 @@
 # HP LaserJet 1020 Plus for modern macOS (Apple Silicon)
 
-> **Private test candidate — not a verified release.** Automated build checks pass, but the installer, firmware workflow, USB/CUPS behavior, and physical printing have not yet been validated end-to-end on a real target Mac and printer.
+> **Experimental test candidate — not a verified release.** Automated build checks pass, but the installer, firmware workflow, USB/CUPS behavior, and physical printing have not yet been validated end-to-end on a real target Mac and printer.
 
 This project explores USB printing support for the HP LaserJet 1020 / 1020 Plus on Apple Silicon Macs, including macOS 26, using OpenPrinting `foo2zjs` and Ghostscript.
 

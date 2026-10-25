@@ -120,8 +120,8 @@ if [ "$BASE_EXISTED" -eq 1 ]; then mv "$BASE" "$BASE_BACKUP"; fi
 mkdir -p "$BASE"
 ditto "$STAGE/bundle" "$BASE"
 chown -R root:wheel "$BASE"
-find "$BASE" -type d -exec chmod 755 {} \\\;
-find "$BASE" -type f -exec chmod 644 {} \\\;
+find "$BASE" -type d -exec chmod 755 {} \;
+find "$BASE" -type f -exec chmod 644 {} \;
 chmod 755 "$BASE/bin/gs" "$BASE/bin/gsed" "$BASE/bin/dc" "$BASE/bin/foo2zjs" "$BASE/bin/foo2zjs-wrapper" "$BASE/bin/foo2zjs-pstops" "$BASE/cups-filter" "$BASE/firmware-watch.sh"
 install -o root -g wheel -m 755 "$FILTER_TMP" "$FILTER"
 mkdir -p "$BASE/queues"

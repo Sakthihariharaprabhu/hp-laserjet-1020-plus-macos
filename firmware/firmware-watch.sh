@@ -9,14 +9,14 @@ RAW_QUEUE=$2
 DEVICE_URI=$3
 FIRMWARE=$4
 BACKEND=/usr/libexec/cups/backend/usb
-STATE_DIR="/var/db/hp-legacy-mac/$QUEUE"
+STATE_DIR="/var/db/hp-legacy-mac-plus/$QUEUE"
 STATE="$STATE_DIR/usb-present"
 PAUSED_MARKER="$STATE_DIR/main-queue-paused-by-helper"
-LOG_TAG=hp-legacy-mac-firmware
+LOG_TAG=hp-legacy-mac-plus-firmware
 
 case "$QUEUE:$RAW_QUEUE" in *[!A-Za-z0-9_.:-]*) exit 1 ;; esac
 case "$DEVICE_URI" in usb://*) ;; *) exit 1 ;; esac
-case "$FIRMWARE" in /Library/Printers/hp-legacy-mac/firmware/sihp1020.dl) ;; *) exit 1 ;; esac
+case "$FIRMWARE" in /Library/Printers/hp-legacy-mac-plus/firmware/sihp1020.dl) ;; *) exit 1 ;; esac
 [ -f "$FIRMWARE" ] && [ ! -L "$FIRMWARE" ] || exit 1
 EXPECTED=c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01
 ACTUAL=$(/usr/bin/shasum -a 256 "$FIRMWARE" | /usr/bin/awk '{print $1}')

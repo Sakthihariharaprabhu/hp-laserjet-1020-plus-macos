@@ -73,8 +73,8 @@ cp -RL "$BREW/share/ghostscript" "$B/share/ghostscript"
 cp "$ROOT/src/cups-filter" "$B/cups-filter"
 cp "$ROOT/firmware/firmware-watch.sh" "$B/firmware-watch.sh"
 # Normalize runtime-readable resources: the build uses a private umask.
-find "$B" -type d -exec chmod 755 {} \\\;
-find "$B" -type f -exec chmod 644 {} \\\;
+find "$B" -type d -exec chmod 755 {} \;
+find "$B" -type f -exec chmod 644 {} \;
 chmod 755 "$B/bin/gs" "$B/bin/gsed" "$B/bin/dc" "$B/bin/foo2zjs" "$B/bin/foo2zjs-wrapper" "$B/bin/foo2zjs-pstops" "$B/cups-filter" "$B/firmware-watch.sh"
 cp "$WORK/foo2zjs/COPYING" "$B/COPYING.foo2zjs"
 printf '%s\\n' "$FOO2ZJS_COMMIT" > "$B/FOO2ZJS_COMMIT"

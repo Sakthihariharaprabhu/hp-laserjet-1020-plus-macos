@@ -44,8 +44,9 @@ if [ -f "$PLIST" ] && command -v plutil >/dev/null 2>&1; then
 fi
 
 if [ -d "$BASE/queues" ] && [ -z "$(find "$BASE/queues" -type f -name '*.conf' -print -quit)" ]; then rmdir "$BASE/queues" 2>/dev/null || true; fi
-if [ -d "$BASE/queues" ] && [ -z "$(find "$BASE/queues" -type f -name '*.conf' -print -quit)" ]; then
-  # This is the isolated candidate-only directory; all owned queues are gone.
+if [ -d "$BASE" ] && { [ ! -d "$BASE/queues" ] || [ -z "$(find "$BASE/queues" -type f -name '*.conf' -print -quit)" ]; } &&
+   ! find /Library/LaunchDaemons -maxdepth 1 -name 'com.hp-legacy-mac-plus.firmware-watch.*.plist' -print 2>/dev/null | grep . >/dev/null 2>&1; then
+  # This path is dedicated to the candidate; no candidate queues or firmware daemons remain.
   rm -rf "$BASE"
 fi
 if [ -f "$FILTER" ] && grep -q 'hp-legacy-mac-plus' "$FILTER"; then rm -f "$FILTER"; fi

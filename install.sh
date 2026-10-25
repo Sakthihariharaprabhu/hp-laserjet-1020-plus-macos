@@ -3,11 +3,11 @@
 set -eu
 umask 077
 
-BASE="/Library/Printers/hp-legacy-mac"
-FILTER="/usr/libexec/cups/filter/hp-legacy-mac"
+BASE="/Library/Printers/hp-legacy-mac-plus"
+FILTER="/usr/libexec/cups/filter/hp-legacy-mac-plus"
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 BUNDLE="${HP_LEGACY_BUNDLE:-$SCRIPT_DIR/dist/bundle}"
-QUEUE="${HP_LEGACY_QUEUE:-HP_LaserJet_1020_Plus}"
+QUEUE="${HP_LEGACY_QUEUE:-HP_LaserJet_1020_Plus_Candidate}"
 PARENT=$(dirname "$BASE")
 
 msg() { printf '%s\n' "HP LaserJet 1020 Plus: $*"; }
@@ -109,7 +109,7 @@ mv "$PPD_TMP.normalized" "$PPD_TMP"
 grep -q '^\\*ModelName:' "$PPD_TMP" || die "PPD does not contain a ModelName."
 grep -v '^\\*cupsFilter' "$PPD_TMP" > "$PPD_TMP.clean"
 mv "$PPD_TMP.clean" "$PPD_TMP"
-printf '*cupsFilter: "application/vnd.cups-pdf 0 hp-legacy-mac"\n' >> "$PPD_TMP"
+printf '*cupsFilter: "application/vnd.cups-pdf 0 hp-legacy-mac-plus"\n' >> "$PPD_TMP"
 cat > "$CONF_TMP" <<'EOF'
 DRIVER_ID="hp1020"
 COLOR_CAPABLE=0
@@ -135,8 +135,8 @@ cupsaccept "$QUEUE"
 COMMIT=1
 trap - EXIT HUP INT TERM
 cleanup
-if [ "$BASE_EXISTED" -eq 1 ]; then msg "Previous driver retained at: $BASE_BACKUP"; fi
+if [ "$BASE_EXISTED" -eq 1 ]; then msg "Previous candidate driver retained at: $BASE_BACKUP"; fi
 [ -z "$FILTER_BACKUP" ] || rm -f "$FILTER_BACKUP"
 msg "Printer queue created: $QUEUE"
-msg "Firmware is not bundled or downloaded. Use the separate GUI firmware setup workflow when it is included and validated."
+msg "Firmware is not bundled or downloaded. Use the separate GUI firmware setup app after review."
 msg "This package cannot be called a validated release until the bundled binaries and physical printing are tested."

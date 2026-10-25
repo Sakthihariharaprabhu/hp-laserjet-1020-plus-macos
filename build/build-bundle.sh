@@ -19,7 +19,7 @@ for formula in ghostscript jbigkit gnu-sed dylibbundler bc; do
 done
 GS="$BREW/bin/gs"
 GSED="$BREW/bin/gsed"
-DC="$BREW/bin/dc"
+DC="$BREW/opt/bc/bin/dc"
 [ -x "$DC" ] || DC="$(command -v dc || true)"
 [ -n "$DC" ] && [ -x "$DC" ] || { echo "GNU dc not found; required for custom paper sizes." >&2; exit 1; }
 [ -x "$GS" ] || { echo "Ghostscript not found at $GS" >&2; exit 1; }

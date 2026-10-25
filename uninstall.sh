@@ -44,7 +44,10 @@ if [ -f "$PLIST" ] && command -v plutil >/dev/null 2>&1; then
 fi
 
 if [ -d "$BASE/queues" ] && [ -z "$(find "$BASE/queues" -type f -name '*.conf' -print -quit)" ]; then rmdir "$BASE/queues" 2>/dev/null || true; fi
-if [ -d "$BASE" ] && [ -z "$(find "$BASE" -mindepth 1 -maxdepth 1 -print -quit)" ]; then rmdir "$BASE"; fi
+if [ -d "$BASE/queues" ] && [ -z "$(find "$BASE/queues" -type f -name '*.conf' -print -quit)" ]; then
+  # This is the isolated candidate-only directory; all owned queues are gone.
+  rm -rf "$BASE"
+fi
 if [ -f "$FILTER" ] && grep -q 'hp-legacy-mac-plus' "$FILTER"; then rm -f "$FILTER"; fi
 if [ -f /Library/Printers/hp-legacy-mac-plus/firmware/sihp1020.dl ]; then
   if ! find /Library/LaunchDaemons -maxdepth 1 -name 'com.hp-legacy-mac-plus.firmware-watch.*.plist' -print 2>/dev/null | grep . >/dev/null 2>&1; then rm -rf /Library/Printers/hp-legacy-mac-plus/firmware; fi

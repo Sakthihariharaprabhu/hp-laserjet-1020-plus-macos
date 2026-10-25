@@ -34,6 +34,10 @@ case "$QUEUE" in ''|*[!A-Za-z0-9_.-]*) die "Queue name contains unsupported char
 if lpstat -p "$QUEUE" >/dev/null 2>&1; then
   die "A printer queue named '$QUEUE' already exists. Nothing was changed. Choose a different queue name."
 fi
+# Do not attempt an in-place upgrade: preserving an existing candidate queue and
+# firmware state is safer than replacing its bundle under an active CUPS queue.
+[ ! -e "$BASE" ] || die "A candidate driver installation already exists. Nothing was changed; remove the candidate queue using its documented uninstaller before retrying."
+[ ! -e "$FILTER" ] || die "The candidate CUPS filter path already exists. Nothing was changed; investigate or remove the prior candidate installation first."
 
 if find "$BUNDLE" -type l -print | grep . >/dev/null 2>&1; then
   die "The bundle contains symbolic links. Nothing was changed."

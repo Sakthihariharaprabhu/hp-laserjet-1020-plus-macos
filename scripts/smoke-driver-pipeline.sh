@@ -11,12 +11,16 @@ BUNDLE=${1:?usage: smoke-driver-pipeline.sh path-to-bundle}
 }
 
 GS_RESOURCE_ROOT=
-for candidate in "$BUNDLE"/share/ghostscript/*; do
-  if [ -d "$candidate/Resource/Init" ] && [ -d "$candidate/lib" ]; then
-    GS_RESOURCE_ROOT=$candidate
-    break
-  fi
-done
+if [ -d "$BUNDLE/share/ghostscript/Resource/Init" ] && [ -d "$BUNDLE/share/ghostscript/lib" ]; then
+  GS_RESOURCE_ROOT="$BUNDLE/share/ghostscript"
+else
+  for candidate in "$BUNDLE"/share/ghostscript/*; do
+    if [ -d "$candidate/Resource/Init" ] && [ -d "$candidate/lib" ]; then
+      GS_RESOURCE_ROOT=$candidate
+      break
+    fi
+  done
+fi
 [ -n "$GS_RESOURCE_ROOT" ] || { echo "Ghostscript resources are missing." >&2; exit 1; }
 
 export PATH="$BUNDLE/bin:/usr/bin:/bin:/usr/sbin:/sbin"

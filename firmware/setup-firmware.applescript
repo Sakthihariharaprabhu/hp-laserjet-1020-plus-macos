@@ -1,6 +1,6 @@
 -- Double-clickable GUI setup source. Built into an .app on macOS by the packaging workflow.
 set firmwareFile to choose file with prompt "Select your existing HP LaserJet 1020 firmware file (sihp1020.dl). It will be checksum-verified and copied locally; it will not be uploaded to the internet."
-set queueOutput to do shell script "/usr/bin/lpstat -p | /usr/bin/sed -n 's/^printer \\([^ ]*\\).*/\\1/p'"
+set queueOutput to do shell script "/usr/bin/lpstat -p | /usr/bin/sed -n 's/^printer \\([^ ]*\\).*/\\1/p' | /usr/bin/grep '^HP_LaserJet_1020_Plus_Candidate' || true"
 set queueChoices to paragraphs of queueOutput
 if (count of queueChoices) is 0 then
   display alert "No printer queues found" message "Install the HP LaserJet 1020 Plus driver and connect the printer first." as critical

@@ -2,6 +2,8 @@ name: Build macOS candidate
 
 on:
   workflow_dispatch:
+  push:
+    branches: [engineering-candidate]
   pull_request:
     branches: [main]
 
@@ -15,7 +17,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Check out project
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
       - name: Confirm runner architecture
         run: |
           test "$(uname -s)" = Darwin
@@ -26,10 +28,12 @@ jobs:
         run: |
           sh scripts/test-source.sh
           sh scripts/check-bundle.sh dist/bundle
+      - name: Smoke-test native print pipeline
+        run: sh scripts/smoke-driver-pipeline.sh dist/bundle
       - name: Build installer candidate
         run: sh packaging/build-release.sh
       - name: Publish candidate as workflow artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: hp-laserjet-1020-plus-macos-arm64-candidate
           path: |

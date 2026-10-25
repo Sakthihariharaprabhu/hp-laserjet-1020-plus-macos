@@ -1,0 +1,80 @@
+#!/bin/sh
+# CUPS filter for HP LaserJet 1020 / 1020 Plus.
+# Arguments: job-id user title copies options [input-file]. Input may be PDF or PS.
+set -eu
+umask 077
+BASE=/Library/Printers/hp-legacy-mac
+QUEUE=${PRINTER:-}
+case "$QUEUE" in ''|*[!A-Za-z0-9_.-]*) echo "hp-legacy-mac: invalid queue name" >&2; exit 1 ;; esac
+[ "${#QUEUE}" -le 64 ] || { echo "hp-legacy-mac: queue name too long" >&2; exit 1; }
+CONF="$BASE/queues/$QUEUE.conf"
+GS="$BASE/bin/gs"
+WRAPPER="$BASE/bin/foo2zjs-wrapper"
+[ -r "$CONF" ] || { echo "hp-legacy-mac: queue configuration missing" >&2; exit 1; }
+[ -x "$GS" ] || { echo "hp-legacy-mac: Ghostscript is missing" >&2; exit 1; }
+[ -x "$WRAPPER" ] || { echo "hp-legacy-mac: foo2zjs wrapper is missing" >&2; exit 1; }
+
+# Parse a strict two-key config. Never source it as shell code.
+DRIVER_ID=
+COLOR_CAPABLE=
+while IFS='=' read -r key value; do
+  case "$key" in
+    DRIVER_ID) DRIVER_ID=${value#\"}; DRIVER_ID=${DRIVER_ID%\"} ;;
+    COLOR_CAPABLE) COLOR_CAPABLE=$value ;;
+    '') ;;
+    *) echo "hp-legacy-mac: unsupported queue configuration key" >&2; exit 1 ;;
+  esac
+done < "$CONF"
+[ "$DRIVER_ID" = hp1020 ] || { echo "hp-legacy-mac: unsupported driver id" >&2; exit 1; }
+[ "$COLOR_CAPABLE" = 0 ] || { echo "hp-legacy-mac: invalid color setting" >&2; exit 1; }
+
+# CUPS sandbox cannot reliably execute Homebrew binaries, so use the private bundle.
+export PATH="$BASE/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+# Homebrew Ghostscript resources are usually versioned (share/ghostscript/10.x.y).
+# Resolve the bundled version instead of assuming resources sit directly at the root.
+GS_RESOURCE_ROOT=
+for candidate in "$BASE"/share/ghostscript/*; do
+  if [ -d "$candidate/Resource/Init" ] && [ -d "$candidate/lib" ]; then
+    GS_RESOURCE_ROOT=$candidate
+    break
+  fi
+done
+if [ -z "$GS_RESOURCE_ROOT" ] && [ -d "$BASE/share/ghostscript/Resource/Init" ] && [ -d "$BASE/share/ghostscript/lib" ]; then
+  GS_RESOURCE_ROOT="$BASE/share/ghostscript"
+fi
+[ -n "$GS_RESOURCE_ROOT" ] || { echo "hp-legacy-mac: bundled Ghostscript resources are missing" >&2; exit 1; }
+export GS_LIB="$GS_RESOURCE_ROOT/Resource/Init:$GS_RESOURCE_ROOT/lib:$GS_RESOURCE_ROOT/Resource/Font:$GS_RESOURCE_ROOT/fonts:$GS_RESOURCE_ROOT/Resource/CMap:$GS_RESOURCE_ROOT/Resource/ColorSpace"
+export GSBIN="$GS"
+
+# Map only a small, explicit set of CUPS options to known wrapper arguments.
+# Disable pathname expansion before splitting the space-separated CUPS options.
+set -f
+OPTIONS=${5:-}
+PAPER_OPT=-p9              # A4 is the project default
+RES_OPT=-r1200x600
+QUALITY_OPT=
+for option in $OPTIONS; do
+  case "$option" in
+    PageSize=A4) PAPER_OPT=-p9 ;;
+    PageSize=Letter) PAPER_OPT=-p1 ;;
+    Resolution=600x600dpi) RES_OPT=-r600x600 ;;
+    Resolution=1200x600dpi) RES_OPT=-r1200x600 ;;
+    Quality=draft) QUALITY_OPT=-t ;;
+    Quality=normal) QUALITY_OPT= ;;
+  esac
+done
+
+# Use the 1020-family ZJS profile. The wrapper handles Ghostscript conversion.
+# Only the mapped, allowlisted options above reach the driver; raw CUPS options
+# and job metadata are never evaluated as shell code.
+if [ "${6:-}" ]; then
+  [ -f "$6" ] || { echo "hp-legacy-mac: CUPS input file is missing" >&2; exit 1; }
+  if [ "$QUALITY_OPT" = -t ]; then
+    exec "$WRAPPER" -z1 -P -L0 "$PAPER_OPT" "$RES_OPT" -t -b "$GS" < "$6"
+  fi
+  exec "$WRAPPER" -z1 -P -L0 "$PAPER_OPT" "$RES_OPT" -b "$GS" < "$6"
+fi
+if [ "$QUALITY_OPT" = -t ]; then
+  exec "$WRAPPER" -z1 -P -L0 "$PAPER_OPT" "$RES_OPT" -t -b "$GS"
+fi
+exec "$WRAPPER" -z1 -P -L0 "$PAPER_OPT" "$RES_OPT" -b "$GS"

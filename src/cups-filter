@@ -19,7 +19,7 @@ DRIVER_ID=
 COLOR_CAPABLE=
 while IFS='=' read -r key value; do
   case "$key" in
-    DRIVER_ID) DRIVER_ID=${value#\"}; DRIVER_ID=${DRIVER_ID%\"} ;;
+    DRIVER_ID) DRIVER_ID=$(printf '%s' "$value" | /usr/bin/sed 's/^"//; s/"$//') ;;
     COLOR_CAPABLE) COLOR_CAPABLE=$value ;;
     '') ;;
     *) echo "hp-legacy-mac-plus: unsupported queue configuration key" >&2; exit 1 ;;

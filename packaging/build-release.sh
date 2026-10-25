@@ -30,7 +30,9 @@ cp "$ROOT/uninstall.sh" "$STAGE/Library/Printers/hp-legacy-mac-package/uninstall
 cp "$ROOT/scripts/normalize-ppd.sh" "$STAGE/Library/Printers/hp-legacy-mac-package/scripts/normalize-ppd.sh"
 cp "$ROOT/firmware/setup-firmware.applescript" "$WORK/setup-firmware.applescript"
 cp "$ROOT/firmware/setup-firmware.sh" "$WORK/app/Contents/Resources/firmware/setup-firmware.sh"
+cp "$ROOT/firmware/fetch-firmware.sh" "$WORK/app/Contents/Resources/firmware/fetch-firmware.sh"
 cp "$ROOT/firmware/firmware-watch.sh" "$WORK/app/Contents/Resources/firmware/firmware-watch.sh"
+cp "$BUNDLE/bin/arm2hpdl" "$WORK/app/Contents/Resources/firmware/arm2hpdl"
 /usr/bin/osacompile -o "$WORK/app/HP LaserJet Firmware Setup.app" "$WORK/setup-firmware.applescript"
 APP="$WORK/app/HP LaserJet Firmware Setup.app"
 mkdir -p "$APP/Contents/Resources/firmware"
@@ -43,7 +45,9 @@ find "$APP" -type d -exec chmod 755 {} \;
 find "$APP" -type f -exec chmod 644 {} \;
 find "$APP/Contents/MacOS" -type f -exec chmod 755 {} \;
 chmod 755 "$APP/Contents/Resources/uninstall.sh"
+chmod 755 "$APP/Contents/Resources/firmware/arm2hpdl"
 if [ -n "${DEVELOPER_ID_APPLICATION:-}" ]; then
+  /usr/bin/codesign --force --options runtime --timestamp --sign "$DEVELOPER_ID_APPLICATION" "$APP/Contents/Resources/firmware/arm2hpdl"
   /usr/bin/codesign --force --options runtime --timestamp --sign "$DEVELOPER_ID_APPLICATION" "$APP"
   /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP"
 fi

@@ -5,7 +5,7 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
 for file in install.sh uninstall.sh src/cups-filter build/build-bundle.sh \
   scripts/check-bundle.sh scripts/check-macho-deps.sh scripts/collect-source-archives.sh \
-  scripts/normalize-ppd.sh firmware/setup-firmware.sh firmware/firmware-watch.sh \
+  scripts/normalize-ppd.sh firmware/setup-firmware.sh firmware/fetch-firmware.sh firmware/firmware-watch.sh \
   scripts/smoke-driver-pipeline.sh packaging/postinstall packaging/build-release.sh; do
   sh -n "$ROOT/$file"
 done
@@ -16,6 +16,11 @@ grep -q '^FOO2ZJS_COMMIT=80499ed5bf6caa2963ad337e37cfda78a80aab1e$' "$ROOT/build
 # its temporary payload, so the uninstaller must be embedded in the compiled app.
 grep -Fq 'cp "$ROOT/uninstall.sh" "$APP/Contents/Resources/uninstall.sh"' "$ROOT/packaging/build-release.sh"
 grep -Fq 'set actionChoices to {"Set Up Firmware", "Uninstall Candidate Driver"}' "$ROOT/firmware/setup-firmware.applescript"
+grep -Fq "Download and verify firmware automatically" "$ROOT/firmware/setup-firmware.applescript"
+grep -Fq "sihp1020.tar.gz" "$ROOT/firmware/fetch-firmware.sh"
+grep -Fq "EXPECTED_SHA256=c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01" "$ROOT/firmware/fetch-firmware.sh"
+grep -Fq "make arm2hpdl" "$ROOT/build/build-bundle.sh"
+grep -Fq 'cp "$ROOT/firmware/fetch-firmware.sh" "$WORK/app/Contents/Resources/firmware/fetch-firmware.sh"' "$ROOT/packaging/build-release.sh"
 grep -Fq 'find "$APP" -type d -exec chmod 755' "$ROOT/packaging/build-release.sh"
 grep -Fq 'find "$APP" -type f -exec chmod 644' "$ROOT/packaging/build-release.sh"
 grep -Fq 'chmod 755 "$APP/Contents/Resources/uninstall.sh"' "$ROOT/packaging/build-release.sh"

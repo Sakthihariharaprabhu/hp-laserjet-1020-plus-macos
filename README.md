@@ -8,7 +8,7 @@ The source and installer are being prepared for a real Mac test. They have **not
 
 - Open-source driver source is fetched at a pinned commit by the build script.
 - The build creates a local `dist/bundle` with the 1020 PPD, `foo2zjs` wrapper, Ghostscript, resources and required libraries.
-- HP's `sihp1020.dl` firmware is **not included**. The 1020 family requires firmware to be sent after the printer is powered on. Use a copy you are authorized to use; the installer never downloads firmware from an unknown third party.
+- HP's proprietary `sihp1020.dl` firmware binary is **not stored in the repository or embedded in the installer**. The included GUI setup app can automatically retrieve the source image over HTTPS from the community mirror referenced by OpenPrinting's `foo2zjs`, convert it locally, and install it only if the output matches the reviewed SHA-256. Internet access is required for automatic setup; selecting an existing local firmware file remains available. The mirror is a community source, not HP support.
 - The installer refuses to proceed if the built bundle is incomplete.
 - No firmware, printer serial number, or personal machine paths are intentionally committed.
 
@@ -35,7 +35,7 @@ It creates a queue named `HP_LaserJet_1020_Plus_Candidate` unless `HP_LEGACY_QUE
 
 ## Firmware after power-on
 
-The HP LaserJet 1020 family needs its firmware uploaded after each printer power-on. This project does not redistribute or download HP firmware. The package now includes a double-clickable **HP LaserJet Firmware Setup** app source: it asks the user to select a local firmware file, validates the reviewed SHA-256, requests administrator authorization, and configures a launchd monitor. The monitor is designed to send the firmware through a separate raw queue when USB is detected or re-detected, temporarily pausing the normal queue during upload. This workflow is not yet physically tested; do not consider it release-ready until power-cycle, raw-queue, failure, and recovery tests pass. See `docs/FIRMWARE-WORKFLOW.md`.
+The HP LaserJet 1020 family needs its firmware uploaded after each printer power-on. This project does not redistribute or download HP firmware. The package includes a double-clickable **HP LaserJet Firmware Setup** app source. It can automatically download and convert the firmware from the upstream community mirror, or accept a local `.dl` file. Both methods validate the reviewed SHA-256 before requesting administrator authorization and configuring a launchd monitor. Automatic acquisition requires internet access. The monitor is designed to send the firmware through a separate raw queue when USB is detected or re-detected, temporarily pausing the normal queue during upload. This workflow is not yet physically tested; do not consider it release-ready until power-cycle, raw-queue, failure, and recovery tests pass. See `docs/FIRMWARE-WORKFLOW.md`.
 
 ## Known limitations before release
 

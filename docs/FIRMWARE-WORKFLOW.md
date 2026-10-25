@@ -1,12 +1,22 @@
-# Firmware workflow (review required before release)
+# Firmware workflow (automatic acquisition option; review required before release)
 
-The HP LaserJet 1020 family requires a firmware upload after printer power-on. This project does not redistribute or download HP firmware. The first-run GUI helper asks the user to select a local `sihp1020.dl` file and checks its SHA-256 against the known file reviewed during development (`c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01`). It copies only that verified file into a root-owned local directory.
+The HP LaserJet 1020 family requires firmware upload after printer power-on. This project does not commit or redistribute HP's proprietary firmware binary. The GUI offers two methods:
 
-After setup, a LaunchDaemon monitors the USB backend. On detection/re-detection it temporarily pauses the normal print queue, sends the firmware through a separate raw queue, waits for the raw job to leave the queue and requires CUPS to record that exact job as completed before re-enabling the normal queue. If completion cannot be confirmed, the normal queue remains paused for safety. If the firmware job fails or times out, the normal queue remains paused rather than silently accepting print jobs that are likely to fail. The helper logs to `/var/log/hp-legacy-mac-plus-firmware.log`.
+1. **Download and verify firmware automatically.** The app retrieves `sihp1020.tar.gz` from `https://www.quirinux.org/printers/`, the HTTPS mirror referenced by OpenPrinting's `foo2zjs/getweb` helper; it streams only `sihp1020.img` to a private temporary directory, runs the bundled OpenPrinting `arm2hpdl` converter, and checks that the resulting `sihp1020.dl` has SHA-256 `c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01`. This requires internet access and relies on a community mirror rather than an official HP download endpoint.
+2. **Select an existing local file.** The same SHA-256 validation runs before installation. The project does not upload the selected file.
+
+The downloader runs as the logged-in user and does not require administrator privileges. The privileged setup helper independently rechecks the checksum before copying the firmware into a root-owned local directory. It then configures a LaunchDaemon to upload the firmware through a separate raw queue when USB is detected or re-detected. The monitor is designed to pause the normal queue while firmware is uploaded and require CUPS to confirm completion before resuming it.
+
+## Security checks
+
+- HTTPS is required, and redirects are restricted to HTTPS.
+- The helper streams only the expected archive member rather than extracting arbitrary archive paths.
+- It installs nothing unless the converted download matches the known SHA-256.
+- The temporary downloaded file is removed after the GUI completes setup.
+- No firmware binary is committed to the repository or embedded in the public installer.
 
 ## Important limitations
 
-- This automation is source-reviewed but not yet validated against a physical HP LaserJet 1020 Plus on current macOS. In particular, USB disappearance on power-cycle, raw queue behavior, CUPS queue pausing, and firmware job completion must be physically tested before release.
-- The helper only accepts the known checksum. If a legitimate firmware file with a different hash is needed, do not disable the check; review and update the trusted checksum through a documented source first.
-- The setup app requests administrator authorization because it installs a root-owned firmware file and a LaunchDaemon. It never fetches firmware from the network.
-- The helper must not be considered release-ready until launchd plist linting, CUPS tests, reconnect tests, and a security review pass on macOS.
+- A matching hash protects against a different or corrupted payload; it does not certify the mirror itself or grant redistribution rights.
+- The mirror can change, go offline, or stop serving the file. If download or checksum validation fails, the app stops and offers no bypass.
+- The firmware setup app, downloader, LaunchDaemon, CUPS behavior, recovery path, and failure modes have not yet been physically validated on a current macOS and must be tested before general distribution.

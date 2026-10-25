@@ -63,7 +63,7 @@ cp foo2zjs-pstops.sh "$B/bin/foo2zjs-pstops"
 cp "$GS" "$B/bin/gs"
 cp "$GSED" "$B/bin/gsed"
 cp "$DC" "$B/bin/dc"
-"$ROOT/scripts/normalize-ppd.sh" PPD/HP-LaserJet_1020.ppd "$WORK/HP-LaserJet_1020.ppd"
+sh "$ROOT/scripts/normalize-ppd.sh" PPD/HP-LaserJet_1020.ppd "$WORK/HP-LaserJet_1020.ppd"
 gzip -n -c "$WORK/HP-LaserJet_1020.ppd" > "$B/ppd/HP-LaserJet_1020.ppd.gz"
 cp -RL "$BREW/share/ghostscript" "$B/share/ghostscript"
 ( cd "$B" && dylibbundler -of -b -x ./bin/gs -d ./libs/ -p @executable_path/../libs/ )

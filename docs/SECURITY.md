@@ -2,7 +2,7 @@
 
 ## Scope
 
-This project installs a CUPS filter and local driver bundle under `/Library/Printers/hp-legacy-mac`. The installer and firmware monitor require administrator/root privileges and must be reviewed as privileged code before use.
+This project installs a CUPS filter and local driver bundle under `/Library/Printers/hp-legacy-mac-plus`. The installer and firmware monitor require administrator/root privileges and must be reviewed as privileged code before use.
 
 ## Decisions made
 
@@ -18,7 +18,7 @@ This project installs a CUPS filter and local driver bundle under `/Library/Prin
 
 ## Open risks / unresolved items
 
-1. **Native build not yet executed.** This environment is Linux without network access in the build shell. The pinned source was verified to exist through GitHub, but the actual ARM64 macOS build and runtime dependencies must be checked on a macOS runner.
+1. **Source has changed after the last native build.** GitHub Actions built a prior ARM64 revision, but the current isolation and firmware fixes require a fresh run before the resulting package can be tested.
 2. **Third-party license compliance:** Ghostscript and other redistributed dependencies need review of exact source archives, Homebrew formula patches, notices, and license obligations before binary distribution.
 3. **Firmware monitor untested:** verify that USB backend visibility changes on printer power-cycle; test raw queue support, queue pause/resume, job completion detection, and recovery from a failed upload on the target macOS version.
 4. **Installer rollback:** failure-injection testing is required on a disposable Mac, including pre-existing driver directory, filter, and queue creation failure.

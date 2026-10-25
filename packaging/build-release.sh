@@ -31,11 +31,13 @@ cp "$ROOT/scripts/normalize-ppd.sh" "$STAGE/Library/Printers/hp-legacy-mac-packa
 cp "$ROOT/firmware/setup-firmware.applescript" "$WORK/setup-firmware.applescript"
 cp "$ROOT/firmware/setup-firmware.sh" "$WORK/app/Contents/Resources/firmware/setup-firmware.sh"
 cp "$ROOT/firmware/firmware-watch.sh" "$WORK/app/Contents/Resources/firmware/firmware-watch.sh"
-cp "$ROOT/uninstall.sh" "$WORK/app/Contents/Resources/uninstall.sh"
 /usr/bin/osacompile -o "$WORK/app/HP LaserJet Firmware Setup.app" "$WORK/setup-firmware.applescript"
 APP="$WORK/app/HP LaserJet Firmware Setup.app"
 mkdir -p "$APP/Contents/Resources/firmware"
 cp "$WORK/app/Contents/Resources/firmware/"* "$APP/Contents/Resources/firmware/"
+# The uninstaller must live inside the actual compiled app bundle; the package postinstall removes its staging tree.
+cp "$ROOT/uninstall.sh" "$APP/Contents/Resources/uninstall.sh"
+chmod 755 "$APP/Contents/Resources/uninstall.sh"
 if [ -n "${DEVELOPER_ID_APPLICATION:-}" ]; then
   /usr/bin/codesign --force --options runtime --timestamp --sign "$DEVELOPER_ID_APPLICATION" "$APP"
   /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP"

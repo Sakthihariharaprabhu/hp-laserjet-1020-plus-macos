@@ -31,6 +31,7 @@ cp "$ROOT/scripts/normalize-ppd.sh" "$STAGE/Library/Printers/hp-legacy-mac-packa
 cp "$ROOT/firmware/setup-firmware.applescript" "$WORK/setup-firmware.applescript"
 cp "$ROOT/firmware/setup-firmware.sh" "$WORK/app/Contents/Resources/firmware/setup-firmware.sh"
 cp "$ROOT/firmware/firmware-watch.sh" "$WORK/app/Contents/Resources/firmware/firmware-watch.sh"
+cp "$ROOT/uninstall.sh" "$WORK/app/Contents/Resources/uninstall.sh"
 /usr/bin/osacompile -o "$WORK/app/HP LaserJet Firmware Setup.app" "$WORK/setup-firmware.applescript"
 APP="$WORK/app/HP LaserJet Firmware Setup.app"
 mkdir -p "$APP/Contents/Resources/firmware"

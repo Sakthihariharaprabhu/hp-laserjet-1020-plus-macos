@@ -2,6 +2,8 @@ name: Build macOS candidate
 
 on:
   workflow_dispatch:
+  push:
+    branches: [engineering-candidate]
   pull_request:
     branches: [main]
 

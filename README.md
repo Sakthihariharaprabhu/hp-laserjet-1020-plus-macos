@@ -25,13 +25,13 @@ The build script is for maintainers. The packaging script now creates a GUI firm
 
 ## Install (engineering candidate only)
 
-The installer requires administrator privileges and modifies the CUPS driver directory and queue configuration. Do not run it until this candidate has passed review and local print testing.
+The installer requires administrator privileges and creates a separate candidate driver directory and CUPS filter (`hp-legacy-mac-plus`) so it does not overwrite the earlier `hp-legacy-mac` installation. Do not run it until the candidate has passed review and local print testing.
 
 ```sh
 sudo sh install.sh
 ```
 
-It creates a queue named `HP_LaserJet_1020_Plus` unless `HP_LEGACY_QUEUE` is set. If that name already exists, it exits before changing installed files. It does not automatically send firmware and does not change SIP, Gatekeeper, or system USB backend permissions.
+It creates a queue named `HP_LaserJet_1020_Plus_Candidate` unless `HP_LEGACY_QUEUE` is set. If that name already exists, it exits before changing installed files. It does not automatically send firmware and does not change SIP, Gatekeeper, or system USB backend permissions.
 
 ## Firmware after power-on
 
@@ -41,7 +41,7 @@ The HP LaserJet 1020 family needs its firmware uploaded after each printer power
 
 - No physical print test has been performed by the project maintainer on macOS 26.6.2.
 - The build has not yet been executed on a real Apple Silicon Mac in this workspace.
-- No native build or signed/notarized `.pkg` has been produced yet.
+- An unsigned `.pkg` was produced by GitHub Actions for an earlier source revision. Since subsequent review fixes changed installer and firmware logic, that artifact is stale and must not be installed; a fresh build is required.
 - The GUI firmware setup and launchd automation are source-level candidates; CUPS/USB behavior still needs a Mac test.
 - Firmware acquisition/use rights and the final non-terminal workflow need review.
 - The installer/filter rollback and CUPS interactions require failure-injection tests on a disposable Mac.

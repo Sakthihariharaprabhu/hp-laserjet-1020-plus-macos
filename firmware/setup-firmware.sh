@@ -3,7 +3,7 @@
 set -eu
 umask 077
 EXPECTED_SHA256=c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01
-BASE=/Library/Printers/hp-legacy-mac
+BASE=/Library/Printers/hp-legacy-mac-plus
 FIRMWARE_DIR="$BASE/firmware"
 FIRMWARE="$FIRMWARE_DIR/sihp1020.dl"
 WATCH="$BASE/firmware-watch.sh"
@@ -16,15 +16,17 @@ QUEUE=$2
 [ -f "$SOURCE" ] && [ -r "$SOURCE" ] || fail 'the selected firmware file cannot be read.'
 case "$QUEUE" in ''|*[!A-Za-z0-9_.-]*) fail 'invalid printer queue name.' ;; esac
 [ "${#QUEUE}" -le 64 ] || fail 'printer queue name is too long.'
-LABEL="com.hp-legacy-mac.firmware-watch.$QUEUE"
+LABEL="com.hp-legacy-mac-plus.firmware-watch.$QUEUE"
 PLIST="/Library/LaunchDaemons/$LABEL.plist"
-STATE_DIR="/var/db/hp-legacy-mac/$QUEUE"
+STATE_DIR="/var/db/hp-legacy-mac-plus/$QUEUE"
 /usr/bin/lpstat -p "$QUEUE" >/dev/null 2>&1 || fail 'the selected printer queue does not exist.'
 DEVICE_URI=$(/usr/bin/lpstat -v "$QUEUE" | /usr/bin/sed -n 's/^device for [^:]*: //p')
 case "$DEVICE_URI" in usb://*) ;; *) fail 'the selected queue is not a USB printer queue.' ;; esac
 printf '%s' "$DEVICE_URI" | /usr/bin/grep -Eiq 'laserjet(%20|[ +])?1020' || fail 'the selected queue does not appear to target an HP LaserJet 1020.'
 ACTUAL=$(/usr/bin/shasum -a 256 "$SOURCE" | /usr/bin/awk '{print $1}')
 [ "$ACTUAL" = "$EXPECTED_SHA256" ] || fail 'the selected firmware file does not match the reviewed firmware checksum. No file was installed.'
+[ -f "$BASE/queues/$QUEUE.conf" ] || fail "the selected queue is not managed by this candidate installer."
+if ! /usr/bin/grep -qx 'DRIVER_ID="hp1020"' "$BASE/queues/$QUEUE.conf"; then fail "the selected queue is not managed by this candidate installer."; fi
 [ -x "$WATCH" ] || fail 'the firmware monitor is missing from the installed package.'
 
 RAW_QUEUE="${QUEUE}_Firmware"
@@ -63,8 +65,8 @@ trap 'rm -f "$TMP_PLIST"' EXIT HUP INT TERM
 '</array>' \
 '<key>RunAtLoad</key><true/>' \
 '<key>KeepAlive</key><true/>' \
-'<key>StandardOutPath</key><string>/var/log/hp-legacy-mac-firmware.log</string>' \
-'<key>StandardErrorPath</key><string>/var/log/hp-legacy-mac-firmware.log</string>' \
+'<key>StandardOutPath</key><string>/var/log/hp-legacy-mac-plus-firmware.log</string>' \
+'<key>StandardErrorPath</key><string>/var/log/hp-legacy-mac-plus-firmware.log</string>' \
 '</dict></plist>' > "$TMP_PLIST"
 /usr/sbin/chown root:wheel "$TMP_PLIST"
 /bin/chmod 644 "$TMP_PLIST"

@@ -28,6 +28,8 @@ jobs:
         run: |
           sh scripts/test-source.sh
           sh scripts/check-bundle.sh dist/bundle
+      - name: Smoke-test native print pipeline
+        run: sh scripts/smoke-driver-pipeline.sh dist/bundle
       - name: Build installer candidate
         run: sh packaging/build-release.sh
       - name: Publish candidate as workflow artifact

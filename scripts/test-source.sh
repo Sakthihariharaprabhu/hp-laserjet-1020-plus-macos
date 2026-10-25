@@ -6,7 +6,7 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 for file in install.sh uninstall.sh src/cups-filter build/build-bundle.sh \
   scripts/check-bundle.sh scripts/check-macho-deps.sh scripts/collect-source-archives.sh \
   scripts/normalize-ppd.sh firmware/setup-firmware.sh firmware/firmware-watch.sh \
-  packaging/postinstall packaging/build-release.sh; do
+  scripts/smoke-driver-pipeline.sh packaging/postinstall packaging/build-release.sh; do
   sh -n "$ROOT/$file"
 done
 

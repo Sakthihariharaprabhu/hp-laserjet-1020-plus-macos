@@ -1,0 +1,12 @@
+dist/
+*.tar.gz
+*.pkg
+*.pkg.sha256
+.DS_Store
+.env
+*.p12
+*.mobileprovision
+*.key
+secrets/
+firmware/sihp1020.dl
+sihp1020.dl

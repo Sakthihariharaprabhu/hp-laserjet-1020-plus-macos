@@ -16,6 +16,10 @@ This project installs a CUPS filter and a local driver bundle under `/Library/Pr
 - The monitor uses a separate raw queue and pauses the normal queue during firmware upload to reduce the chance that a print job starts before firmware initialization.
 - A failed firmware job should not be silently reported as success.
 
+- The print-position setting is parsed as a strict number (−10…4 mm) by `bin/hp1020-clip`; invalid values are ignored by the filter and refused by the root helper `set-offset.sh`.
+- The firmware downloader tries only sources that serve the identical reviewed file, and every download must match the SHA-256.
+- The firmware upload relies on a CUPS raw queue, which CUPS has deprecated; it may stop working in a future macOS (see docs/FIRMWARE-WORKFLOW.md).
+
 ## Current verification
 
 GitHub Actions run [#21](https://github.com/Sakthihariharaprabhu/hp-laserjet-1020-plus-macos/actions/runs/40209197664) completed successfully for source commit `2f7666359e2a127e7bb82bd8612181d2fc098bdf` on `main`. It built the ARM64 candidate and passed source/bundle checks and a conversion-pipeline smoke test.
@@ -26,7 +30,7 @@ This is not a security audit or an end-to-end Mac/printer test. The package is u
 
 1. **Physical behavior is unverified.** Confirm USB detection, printing, firmware setup after power cycle, raw-queue behavior, queue pause/resume and recovery on the target macOS version.
 2. **Third-party licensing:** Ghostscript and other redistributed dependencies need review of exact source archives, Homebrew formula patches, notices and license obligations before binary distribution.
-3. **Firmware source and rights:** automatic acquisition uses a community mirror referenced by OpenPrinting, not an official HP endpoint. A matching SHA-256 does not certify the mirror or establish rights to download/use/redistribute firmware.
+3. **Firmware source and rights:** the firmware is published as a separate release asset (not in git or the package) for owners of the printer and will be removed on request; automatic acquisition downloads that asset. A matching SHA-256 does not certify the mirror or establish rights to download/use/redistribute firmware.
 4. **Installer rollback:** test failure injection on a disposable Mac, including pre-existing driver/filter paths and queue-creation failures.
 5. **CUPS filter contract:** validate PDF/PS input handling, wrapper arguments, Ghostscript resources and output ZjStream bytes against the exact built version.
 6. **Device matching:** verify USB backend output selects the intended HP LaserJet 1020 device and refuses ambiguous multiple-device matches.

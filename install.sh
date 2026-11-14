@@ -8,6 +8,11 @@ FILTER="/usr/libexec/cups/filter/hp-legacy-mac-plus"
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 BUNDLE="${HP_LEGACY_BUNDLE:-$SCRIPT_DIR/dist/bundle}"
 QUEUE="${HP_LEGACY_QUEUE:-HP_LaserJet_1020_Plus_Candidate}"
+# Starting print-position correction in mm (negative = move content left).
+# This is an ESTIMATE pending a physical calibration print; users change it
+# afterwards from the Firmware Setup app ("Adjust print position").
+DEFAULT_HORIZONTAL_OFFSET_MM=-3.0
+DEFAULT_VERTICAL_OFFSET_MM=0
 PARENT=$(dirname "$BASE")
 
 msg() { printf '%s\n' "HP LaserJet 1020 Plus: $*"; }
@@ -26,6 +31,9 @@ die() { printf '%s\n' "HP LaserJet 1020 Plus: ERROR: $*" >&2; exit 1; }
 [ -f "$BUNDLE/ppd/HP-LaserJet_1020.ppd.gz" ] || die "Bundle is missing the HP 1020 PPD."
 [ -f "$BUNDLE/cups-filter" ] && [ -x "$BUNDLE/cups-filter" ] || die "Bundle is missing executable cups-filter."
 [ -f "$BUNDLE/firmware-watch.sh" ] && [ -x "$BUNDLE/firmware-watch.sh" ] || die "Bundle is missing firmware-watch.sh."
+[ -f "$BUNDLE/bin/hp1020-clip" ] || die "Bundle is missing bin/hp1020-clip."
+sh "$BUNDLE/bin/hp1020-clip" check "$DEFAULT_HORIZONTAL_OFFSET_MM" || die "Default horizontal offset is invalid."
+sh "$BUNDLE/bin/hp1020-clip" check "$DEFAULT_VERTICAL_OFFSET_MM" || die "Default vertical offset is invalid."
 
 case "$QUEUE" in ''|*[!A-Za-z0-9_.-]*) die "Queue name contains unsupported characters." ;; esac
 [ "${#QUEUE}" -le 64 ] || die "Queue name is too long."
@@ -42,7 +50,7 @@ fi
 if find "$BUNDLE" -type l -print | grep . >/dev/null 2>&1; then
   die "The bundle contains symbolic links. Nothing was changed."
 fi
-for f in "$BUNDLE/bin/gs" "$BUNDLE/bin/gsed" "$BUNDLE/bin/dc" "$BUNDLE/bin/foo2zjs" "$BUNDLE/bin/foo2zjs-wrapper" "$BUNDLE/bin/foo2zjs-pstops" "$BUNDLE/ppd/HP-LaserJet_1020.ppd.gz" "$BUNDLE/cups-filter" "$BUNDLE/firmware-watch.sh"; do
+for f in "$BUNDLE/bin/gs" "$BUNDLE/bin/gsed" "$BUNDLE/bin/dc" "$BUNDLE/bin/foo2zjs" "$BUNDLE/bin/foo2zjs-wrapper" "$BUNDLE/bin/foo2zjs-pstops" "$BUNDLE/ppd/HP-LaserJet_1020.ppd.gz" "$BUNDLE/cups-filter" "$BUNDLE/firmware-watch.sh" "$BUNDLE/bin/hp1020-clip"; do
   [ -f "$f" ] || die "Required file is not a regular file: $f"
 done
 
@@ -114,10 +122,8 @@ grep -q '^\*ModelName:' "$PPD_TMP" || die "PPD does not contain a ModelName."
 grep -v '^\*cupsFilter' "$PPD_TMP" > "$PPD_TMP.clean"
 mv "$PPD_TMP.clean" "$PPD_TMP"
 printf '*cupsFilter: "application/vnd.cups-pdf 0 hp-legacy-mac-plus"\n' >> "$PPD_TMP"
-cat > "$CONF_TMP" <<'EOF'
-DRIVER_ID="hp1020"
-COLOR_CAPABLE=0
-EOF
+printf 'DRIVER_ID="hp1020"\nCOLOR_CAPABLE=0\nHORIZONTAL_OFFSET_MM=%s\nVERTICAL_OFFSET_MM=%s\n' \
+  "$DEFAULT_HORIZONTAL_OFFSET_MM" "$DEFAULT_VERTICAL_OFFSET_MM" > "$CONF_TMP"
 install -o root -g wheel -m 755 "$STAGE/bundle/cups-filter" "$FILTER_TMP"
 
 if [ "$BASE_EXISTED" -eq 1 ]; then mv "$BASE" "$BASE_BACKUP"; fi
@@ -126,9 +132,10 @@ ditto "$STAGE/bundle" "$BASE"
 chown -R root:wheel "$BASE"
 find "$BASE" -type d -exec chmod 755 {} \;
 find "$BASE" -type f -exec chmod 644 {} \;
-chmod 755 "$BASE/bin/gs" "$BASE/bin/gsed" "$BASE/bin/dc" "$BASE/bin/foo2zjs" "$BASE/bin/foo2zjs-wrapper" "$BASE/bin/foo2zjs-pstops" "$BASE/cups-filter" "$BASE/firmware-watch.sh"
+chmod 755 "$BASE/bin/gs" "$BASE/bin/gsed" "$BASE/bin/dc" "$BASE/bin/foo2zjs" "$BASE/bin/foo2zjs-wrapper" "$BASE/bin/foo2zjs-pstops" "$BASE/cups-filter" "$BASE/firmware-watch.sh" "$BASE/bin/hp1020-clip"
 install -o root -g wheel -m 755 "$FILTER_TMP" "$FILTER"
 mkdir -p "$BASE/queues"
+chmod 755 "$BASE/queues"   # settings are not secret; lets the status check read them
 install -o root -g wheel -m 644 "$CONF_TMP" "$BASE/queues/$QUEUE.conf"
 
 QUEUE_CREATED=1
@@ -142,5 +149,5 @@ cleanup
 if [ "$BASE_EXISTED" -eq 1 ]; then msg "Previous candidate driver retained at: $BASE_BACKUP"; fi
 [ -z "$FILTER_BACKUP" ] || rm -f "$FILTER_BACKUP"
 msg "Printer queue created: $QUEUE"
-msg "Firmware is not bundled or downloaded. Use the separate GUI firmware setup app after review."
+msg "Next: open Applications > HP LaserJet Firmware Setup and choose Set Up Firmware."
 msg "This package cannot be called a validated release until the bundled binaries and physical printing are tested."

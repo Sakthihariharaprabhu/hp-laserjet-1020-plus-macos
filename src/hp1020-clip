@@ -1,0 +1,58 @@
+#!/bin/sh
+# Convert a print-position correction in millimetres into foo2zjs clipping
+# arguments for the HP LaserJet 1020 family (-z1) on A4 or Letter.
+#
+# Usage:
+#   hp1020-clip check <mm>                       -> exit 0 if <mm> is an allowed value
+#   hp1020-clip args <xres> <h_mm> <v_mm>         -> prints "-u AxB -l CxD"
+#
+# How it works: with -L0 the printer places the first column/row it receives at
+# its own fixed margin. foo2zjs normally crops 192 px (1200 dpi) / 96 rows
+# (600 dpi), about 4 mm, from each side. Cropping MORE from the left and LESS
+# from the right moves the printed content LEFT by the same amount, and so on.
+#   h_mm > 0 moves content RIGHT, h_mm < 0 moves it LEFT.
+#   v_mm > 0 moves content DOWN,  v_mm < 0 moves it UP.
+# Allowed range for both: -10 to +4 mm (+4 mm is the most the default 4 mm
+# crop can give back; moving further right/down would need padding).
+set -eu
+
+MIN_MM=-10
+MAX_MM=4
+
+valid_mm() {
+  case "$1" in
+    ''|*[!0-9.-]*) return 1 ;;
+  esac
+  printf '%s\n' "$1" | /usr/bin/grep -Eq '^-?[0-9]{1,2}(\.[0-9]{1,2})?$' || return 1
+  /usr/bin/awk -v v="$1" -v lo="$MIN_MM" -v hi="$MAX_MM" 'BEGIN { exit !(v + 0 >= lo && v + 0 <= hi) }'
+}
+
+case "${1:-}" in
+  check)
+    [ "$#" -eq 2 ] || { echo "usage: hp1020-clip check <mm>" >&2; exit 2; }
+    valid_mm "$2"
+    ;;
+  args)
+    [ "$#" -eq 4 ] || { echo "usage: hp1020-clip args <xres> <h_mm> <v_mm>" >&2; exit 2; }
+    XRES=$2
+    case "$XRES" in 600|1200) ;; *) echo "hp1020-clip: unsupported resolution" >&2; exit 1 ;; esac
+    valid_mm "$3" || { echo "hp1020-clip: horizontal offset out of range" >&2; exit 1; }
+    valid_mm "$4" || { echo "hp1020-clip: vertical offset out of range" >&2; exit 1; }
+    /usr/bin/awk -v xres="$XRES" -v h="$3" -v v="$4" 'BEGIN {
+      yres = 600
+      base_x = 192 * xres / 1200   # wrapper default for -z1 A4/Letter
+      base_y = 96
+      sx = h * xres / 25.4; sx = (sx < 0) ? int(sx - 0.5) : int(sx + 0.5)
+      sy = v * yres / 25.4; sy = (sy < 0) ? int(sy - 0.5) : int(sy + 0.5)
+      ulx = base_x - sx; lrx = base_x + sx
+      uly = base_y - sy; lry = base_y + sy
+      if (ulx < 0) ulx = 0; if (lrx < 0) lrx = 0
+      if (uly < 0) uly = 0; if (lry < 0) lry = 0
+      printf "-u %dx%d -l %dx%d\n", ulx, uly, lrx, lry
+    }'
+    ;;
+  *)
+    echo "usage: hp1020-clip check <mm> | args <xres> <h_mm> <v_mm>" >&2
+    exit 2
+    ;;
+esac

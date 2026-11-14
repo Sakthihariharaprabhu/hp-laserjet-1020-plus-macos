@@ -13,6 +13,7 @@ Last updated: 2026-11-14 · Version on this branch: see [`VERSION`](VERSION) (`0
 | Physical printing | ✅ One page printed on an HP LaserJet 1020 Plus via a USB hub |
 | A4 alignment | ❌ Extra space on the LEFT, content cut on the RIGHT (also with the older hp-legacy-mac driver). 0.2.0 adds an adjustable offset (default −3.0 mm, an estimate) and a calibration page — **not yet confirmed on paper** |
 | Automatic firmware download | ❌ Failed in 0.1.0 (quirinux.org timed out). Also found: quirinux's file is a different firmware build and could never pass the checksum. 0.2.0 downloads from this project's release instead — **not yet tested on a Mac** |
+| Automatic firmware setup during install (0.2.0) | ⏳ New; works only once the repository is public (download source is the public release). Falls back to opening the app |
 | "Select an existing firmware file" | ✅ Works with the tested file (SHA-256 `c14fdf0a…87cd01`) |
 | Firmware reload after power cycle | ⏳ Not yet tested (the maintainer's test Mac did not have firmware setup completed) |
 | 0.2.0 app buttons (Check Status, test page, Adjust Print Position) | ⏳ Built and checked in CI; not yet clicked on a real Mac |

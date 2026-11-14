@@ -26,6 +26,12 @@ grep -Fq -- "--connect-timeout 30" "$ROOT/firmware/fetch-firmware.sh"
 [ -s "$ROOT/calibration/a4-alignment-test.pdf" ] || { echo "Calibration PDF is missing." >&2; exit 1; }
 grep -Fq 'cp "$ROOT/calibration/a4-alignment-test.pdf"' "$ROOT/packaging/build-release.sh"
 
+# Installer sets up firmware automatically, and never fails the install because of it.
+grep -Fq 'fetch-firmware.sh' "$ROOT/packaging/postinstall"
+grep -Fq 'open_app_for_user' "$ROOT/packaging/postinstall"
+[ "$(tail -n 1 "$ROOT/packaging/postinstall")" = "exit 0" ] || { echo "postinstall must end with exit 0." >&2; exit 1; }
+grep -Fq 'Set Up Now' "$ROOT/firmware/setup-firmware.applescript"
+
 # Version: one source of truth.
 grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$' "$ROOT/VERSION" || { echo "VERSION is malformed." >&2; exit 1; }
 grep -Fq -- '--version "$VERSION"' "$ROOT/packaging/build-release.sh"

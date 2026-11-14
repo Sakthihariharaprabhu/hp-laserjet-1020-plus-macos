@@ -9,22 +9,18 @@ Print to an HP LaserJet 1020 or 1020 Plus from a modern Mac (M1, M2, M3, M4…),
 ## Quick start
 
 ```
-1. Download      →  2. Install       →  3. Open Anyway   →  4. Firmware Setup  →  5. Test page
-   .pkg (+ .dl)      double-click        (only if blocked)     once, ~1 minute       check alignment
+1. Download .pkg  →  2. Double-click  →  3. Open Anyway (only if blocked)  →  4. Print
+                     firmware is set up automatically during installation
 ```
 
 **Before you start:** connect the printer by USB (a USB hub is fine) and switch it on.
 
-1. **Download** from the [Releases page](https://github.com/Sakthihariharaprabhu/hp-laserjet-1020-plus-macos/releases):
-   - `HP-LaserJet-1020-Plus-macOS-arm64-unsigned.pkg` (the installer)
-   - `sihp1020.dl` (the printer firmware — optional, see [Get the firmware file](#get-the-firmware-file))
-   - *Optional:* the matching `.sha256` file, if you want to [check the download](#optional-check-the-download).
+1. **Download** `HP-LaserJet-1020-Plus-macOS-arm64-unsigned.pkg` from the [Releases page](https://github.com/Sakthihariharaprabhu/hp-laserjet-1020-plus-macos/releases). *Optional:* also the `.sha256` file to [check the download](#optional-check-the-download).
 2. **Double-click the `.pkg`** and follow the installer.
 3. **If macOS says "Apple could not verify … free of malware":** click **Done** (not Move to Trash), then open **System Settings → Privacy & Security**, scroll down, click **Open Anyway** next to the installer's name, and enter your password. Then run the installer again.
-4. **Open Applications → HP LaserJet Firmware Setup** → choose **Set Up Firmware**.
-   - Choose **Download and verify firmware automatically**, *or* **Select an existing firmware file** and pick the `sihp1020.dl` you downloaded.
-   - Enter your Mac password when asked. You only do this **once** (see [Why firmware?](#why-firmware)).
-5. **Print the alignment test page:** open the same app → **Print Alignment Test Page**. If the frame is not centred, follow [Page is shifted or cut off](#page-is-shifted-or-cut-off).
+4. **Firmware is set up automatically** at the end of the installation (needs internet). You don't need to do anything.
+   - Only if that was not possible (for example no internet), the **HP LaserJet Firmware Setup** app opens by itself and asks **Set Up Now?** → follow it. See [Get the firmware file](#get-the-firmware-file).
+5. **Optional — check alignment once:** Applications → **HP LaserJet Firmware Setup** → **Print Alignment Test Page**. If the frame is not centred, follow [Page is shifted or cut off](#page-is-shifted-or-cut-off).
 
 Now print normally from any app and pick the printer **HP_LaserJet_1020_Plus_Candidate**, paper **A4**.
 
@@ -54,8 +50,8 @@ The printer needs HP's firmware file `sihp1020.dl` every time it is switched on.
 
 | Way | How |
 |---|---|
-| **A. Release download** (easiest) | Download `sihp1020.dl` from the [firmware release](https://github.com/Sakthihariharaprabhu/hp-laserjet-1020-plus-macos/releases/tag/firmware-hp1020), then choose **Select an existing firmware file**. |
-| **B. Automatic download** | Choose **Download and verify firmware automatically**. The app downloads the same file from the project's release (needs internet). |
+| **A. Release download** | Download `sihp1020.dl` from the [firmware release](https://github.com/Sakthihariharaprabhu/hp-laserjet-1020-plus-macos/releases/tag/firmware-hp1020), then choose **Select an existing firmware file**. |
+| **B. Automatic** (default) | Happens by itself during installation. Or in the app: **Download and verify firmware automatically**. Downloads the same file from the project's release (needs internet). |
 | **C. Your own copy** | From an old HP / `hp-legacy-mac` driver installation, or from Linux foo2zjs: `/usr/share/foo2zjs/firmware/sihp1020.dl`. Choose **Select an existing firmware file**. |
 
 Accepted file: `sihp1020.dl`, SHA-256 `c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01`. Other `sihp1020` files on the internet are often a **different firmware build** and will be refused (this is on purpose — only the tested file is accepted).
@@ -64,7 +60,7 @@ Accepted file: `sihp1020.dl`, SHA-256 `c14fdf0af84d1df40545eef7c7d4e2e07dd58fe93
 
 ### Why firmware?
 
-The LaserJet 1020 **forgets its firmware every time it is switched off**. After **Set Up Firmware**, a small background service on your Mac notices when the printer is switched on or plugged in and sends the firmware automatically. So the setup is **one time only** — afterwards just switch on and print.
+The LaserJet 1020 **forgets its firmware every time it is switched off**. After **Set Up Firmware**, a small background service on your Mac notices when the printer is switched on or plugged in and sends the firmware automatically. The installer sets this up automatically, so it is **one time only** — afterwards just switch the printer on and print, like any normal printer. If you print while the printer is off, the job waits and prints once it is switched on.
 
 ---
 

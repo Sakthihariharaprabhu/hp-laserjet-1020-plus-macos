@@ -46,3 +46,7 @@ The firmware upload uses a CUPS **raw** queue (`lpadmin -m raw`). CUPS has depre
 - A matching hash proves the bytes are the reviewed bytes; it does not establish any right to use or redistribute HP firmware.
 - The release download only works while the repository is public and the asset exists.
 - Power-cycle reload has not yet been physically tested on 0.2.0.
+
+## Backup copy (maintainer only)
+
+A private backup repository, `hp-laserjet-1020-firmware-backup`, holds the same firmware as a release asset (not in git) and links back to this project. If the public `firmware-hp1020` asset ever has to be removed, the maintainer can use the backup to decide on a replacement source; the checksum gate stays the same.

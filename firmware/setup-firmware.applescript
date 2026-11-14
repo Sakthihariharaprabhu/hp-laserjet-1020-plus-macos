@@ -7,6 +7,15 @@ property appTitle : "HP LaserJet 1020 Plus"
 
 on run
 	set appPath to POSIX path of (path to me)
+	-- First-run shortcut: if the firmware is not set up yet, offer exactly that.
+	set firmwareReady to do shell script "/bin/test -f /Library/Printers/hp-legacy-mac-plus/firmware/sihp1020.dl && echo yes || echo no"
+	if firmwareReady is "no" then
+		set reply to display dialog "The printer firmware is not set up yet." & return & return & "Set it up now? It takes about a minute and is needed only once. After that, just switch the printer on and print." buttons {"More Options", "Set Up Now"} default button "Set Up Now" with title appTitle
+		if button returned of reply is "Set Up Now" then
+			setUpFirmware(appPath)
+			return
+		end if
+	end if
 	set actionChoices to {"Set Up Firmware", "Check Status", "Print Alignment Test Page", "Adjust Print Position", "Open Help Page", "Uninstall Driver"}
 	set actionChoice to choose from list actionChoices with title appTitle with prompt "What would you like to do?" default items {"Set Up Firmware"} OK button name "Continue" cancel button name "Close" without multiple selections allowed
 	if actionChoice is false then return

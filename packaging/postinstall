@@ -1,9 +1,40 @@
 #!/bin/sh
 set -eu
 STAGE=/Library/Printers/hp-legacy-mac-package
+APP="/Applications/HP LaserJet Firmware Setup.app"
+FW="$APP/Contents/Resources/firmware"
+QUEUE=HP_LaserJet_1020_Plus_Candidate
 # The helper is invoked through /bin/sh, so do not require an executable bit.
 [ -f "$STAGE/install.sh" ] && [ -r "$STAGE/install.sh" ] || { echo 'HP LaserJet package payload is incomplete.' >&2; exit 1; }
 /bin/sh "$STAGE/install.sh"
 # Keep the staged installer only if installation failed; it is useful for recovery.
 /bin/rm -rf "$STAGE"
+
+# ---- Automatic firmware setup (no clicks needed) -------------------------
+# Try to download the firmware from the project's release and set up the
+# background reload service. Every download must match the pinned SHA-256
+# (checked by fetch-firmware.sh and again by setup-firmware.sh).
+# This step can never make the installation fail: if anything goes wrong,
+# the Firmware Setup app is opened for the user, which explains what to do.
+auto_firmware() {
+  [ -f "$FW/fetch-firmware.sh" ] && [ -f "$FW/setup-firmware.sh" ] || return 1
+  [ -f /Library/Printers/hp-legacy-mac-plus/firmware/sihp1020.dl ] && return 0
+  path=$(TMPDIR=/private/tmp /bin/sh "$FW/fetch-firmware.sh" 2>/dev/null) || return 1
+  rc=0
+  /bin/sh "$FW/setup-firmware.sh" "$path" "$QUEUE" || rc=1
+  /bin/rm -rf "$(/usr/bin/dirname "$path")"
+  return "$rc"
+}
+open_app_for_user() {
+  user=$(/usr/bin/stat -f%Su /dev/console 2>/dev/null || true)
+  case "$user" in ''|root|loginwindow) return 0 ;; esac
+  uid=$(/usr/bin/id -u "$user" 2>/dev/null) || return 0
+  /bin/launchctl asuser "$uid" /usr/bin/sudo -u "$user" /usr/bin/open "$APP" >/dev/null 2>&1 || true
+}
+if auto_firmware; then
+  echo 'HP LaserJet 1020 Plus: firmware installed automatically; it reloads every time the printer is switched on.'
+else
+  echo 'HP LaserJet 1020 Plus: automatic firmware setup was not possible; opening the Firmware Setup app.'
+  open_app_for_user
+fi
 exit 0

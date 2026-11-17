@@ -135,3 +135,8 @@ echo "Static source checks passed (not a build or print test)."
 PKG_ID=$(sed -n 's/.*--identifier \([^ ]*\).*/\1/p' "$ROOT/packaging/build-release.sh")
 grep -Fq "pkgutil --forget $PKG_ID" "$ROOT/uninstall.sh" || { echo "uninstall.sh does not forget package $PKG_ID." >&2; exit 1; }
 grep -Fq 'media=iso_a4_210x297mm' "$ROOT/src/cups-filter" || { echo "Filter must understand media= options." >&2; exit 1; }
+
+# Firmware reload must be event driven, not a polling loop.
+grep -Fq 'com.apple.iokit.matching' "$ROOT/firmware/setup-firmware.sh" || { echo "LaunchDaemon must use USB event matching." >&2; exit 1; }
+if grep -q 'KeepAlive' "$ROOT/firmware/setup-firmware.sh"; then echo "LaunchDaemon must not use KeepAlive." >&2; exit 1; fi
+if grep -Eq '^while :' "$ROOT/firmware/firmware-watch.sh"; then echo "firmware-watch.sh must not loop forever." >&2; exit 1; fi

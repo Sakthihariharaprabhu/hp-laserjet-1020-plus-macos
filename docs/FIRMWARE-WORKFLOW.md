@@ -35,7 +35,7 @@ The 2005-03-09 build is probably also valid 1020 firmware, but it has not been t
 
 1. The downloader runs as the logged-in user (no admin rights) in a private temporary folder.
 2. `setup-firmware.sh` runs as root (password prompt), re-checks the checksum, copies the file to `/Library/Printers/hp-legacy-mac-plus/firmware/`, creates a raw queue `<queue>_Firmware` and a LaunchDaemon.
-3. `firmware-watch.sh` (LaunchDaemon) polls USB every 5 s. When the printer appears, it pauses the normal queue, sends the firmware through the raw queue, waits for CUPS to report the job **completed**, then resumes the normal queue. If the job does not complete, the queue stays paused (safe default) and the event is logged to `/var/log/hp-legacy-mac-plus-firmware.log`.
+3. `firmware-watch.sh` (LaunchDaemon) is started by macOS itself when an HP USB device appears (launchd `LaunchEvents` / IOKit matching) and once at boot; it does not poll or stay running. When the printer is present, it pauses the normal queue, sends the firmware through the raw queue, waits for CUPS to report the job **completed**, then resumes the normal queue. If the job does not complete, the queue stays paused (safe default) and the event is logged to `/var/log/hp-legacy-mac-plus-firmware.log`.
 
 ## CUPS raw queue — deprecated
 

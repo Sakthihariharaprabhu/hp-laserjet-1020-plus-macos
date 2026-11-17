@@ -70,7 +70,11 @@ trap 'rm -f "$TMP_PLIST"' EXIT HUP INT TERM
 "<string>$FIRMWARE_XML</string>" \
 '</array>' \
 '<key>RunAtLoad</key><true/>' \
-'<key>KeepAlive</key><true/>' \
+'<key>LaunchEvents</key><dict><key>com.apple.iokit.matching</key><dict><key>com.hp-legacy-mac-plus.usb</key><dict>' \
+'<key>IOProviderClass</key><string>IOUSBHostDevice</string>' \
+'<key>idVendor</key><integer>1008</integer>' \
+'<key>IOMatchLaunchStream</key><true/>' \
+'</dict></dict></dict>' \
 '<key>StandardOutPath</key><string>/var/log/hp-legacy-mac-plus-firmware.log</string>' \
 '<key>StandardErrorPath</key><string>/var/log/hp-legacy-mac-plus-firmware.log</string>' \
 '</dict></plist>' > "$TMP_PLIST"

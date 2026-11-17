@@ -130,3 +130,8 @@ if grep -Fq '\\n' "$ROOT/scripts/collect-source-archives.sh"; then
   exit 1
 fi
 echo "Static source checks passed (not a build or print test)."
+
+# Uninstaller must forget the same package id the build uses, and filter must read media=.
+PKG_ID=$(sed -n 's/.*--identifier \([^ ]*\).*/\1/p' "$ROOT/packaging/build-release.sh")
+grep -Fq "pkgutil --forget $PKG_ID" "$ROOT/uninstall.sh" || { echo "uninstall.sh does not forget package $PKG_ID." >&2; exit 1; }
+grep -Fq 'media=iso_a4_210x297mm' "$ROOT/src/cups-filter" || { echo "Filter must understand media= options." >&2; exit 1; }

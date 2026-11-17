@@ -66,4 +66,18 @@ if [ -f "$FILTER" ] && grep -q 'hp-legacy-mac-plus' "$FILTER"; then rm -f "$FILT
 if [ -f /Library/Printers/hp-legacy-mac-plus/firmware/sihp1020.dl ]; then
   if ! find /Library/LaunchDaemons -maxdepth 1 -name 'com.hp-legacy-mac-plus.firmware-watch.*.plist' -print 2>/dev/null | grep . >/dev/null 2>&1; then rm -rf /Library/Printers/hp-legacy-mac-plus/firmware; fi
 fi
+
+# Last queue gone? Then also remove everything else this project put on the Mac,
+# so no stray files are left: state folder, log file, helper app, package receipt.
+STILL_USED=0
+if [ -d "$BASE/queues" ] && [ -n "$(find "$BASE/queues" -type f -name '*.conf' -print -quit)" ]; then STILL_USED=1; fi
+if find /Library/LaunchDaemons -maxdepth 1 -name 'com.hp-legacy-mac-plus.firmware-watch.*.plist' -print 2>/dev/null | grep . >/dev/null 2>&1; then STILL_USED=1; fi
+if [ "$STILL_USED" -eq 0 ]; then
+  rm -rf /var/db/hp-legacy-mac-plus
+  rm -f /var/log/hp-legacy-mac-plus-firmware.log
+  rm -rf /Library/Printers/hp-legacy-mac-package
+  /usr/sbin/pkgutil --forget com.hp-legacy-mac.hp1020plus >/dev/null 2>&1 || true
+  rm -rf "/Applications/HP LaserJet Firmware Setup.app"
+  echo "No printer queue from this driver remains, so the helper app, logs and package record were removed too."
+fi
 echo "Removed only the confirmed hp-legacy-mac-plus candidate queue and associated driver files."

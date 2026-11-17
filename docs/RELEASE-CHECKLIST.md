@@ -25,7 +25,7 @@ Use this checklist before distributing a package beyond a small, explicitly cons
 
 ## Firmware workflow
 
-- [ ] GUI accepts a local `.dl` file or retrieves/converts firmware from the documented community mirror.
+- [ ] GUI accepts a local `.dl` file or downloads it from the sources listed in `fetch-firmware.sh` (only sources verified to serve the identical file).
 - [ ] Both paths reject any resulting binary that does not match the reviewed SHA-256.
 - [ ] Community-mirror availability, provenance, and firmware download/use rights are reviewed.
 - [ ] Firmware upload, raw queue, queue pause/resume, completion detection and recovery are tested after every power cycle.
@@ -44,6 +44,9 @@ Use this checklist before distributing a package beyond a small, explicitly cons
 
 ## Release
 
+- [ ] `VERSION` updated; the tag is exactly `v` + VERSION (CI refuses a mismatch on tag builds).
+- [ ] `.sha256` sidecar contains only the file name; `shasum -a 256 -c` prints OK in the download folder.
+- [ ] Firmware is NOT attached to the driver release; it stays on the separate `firmware-hp1020` release.
 - [ ] Test pre-release is clearly labelled as experimental and links to the matching source commit.
 - [ ] Attach the `.pkg` and its `.sha256` sidecar; confirm the checksums match the downloaded files.
 - [ ] Include known limitations, firmware-source caveat and non-affiliation disclaimer.

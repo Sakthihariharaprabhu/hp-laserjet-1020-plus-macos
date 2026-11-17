@@ -1,0 +1,85 @@
+name: Printer problem
+description: Something does not install, set up or print correctly.
+title: "[Printer problem] "
+labels: ["printer problem"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing! Please **do not include serial numbers, your name, email, account details or private file paths** — this page is public once the project is public.
+        Tip: open **HP LaserJet Firmware Setup → Check Status** and paste the result below.
+  - type: input
+    id: mac
+    attributes:
+      label: Mac model / Apple Silicon chip
+      placeholder: "MacBook Air M2"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and build
+      description: Apple menu → About This Mac (click the version to see the build).
+      placeholder: "26.1 (25B78)"
+    validations:
+      required: true
+  - type: dropdown
+    id: printer
+    attributes:
+      label: Printer model
+      options: ["HP LaserJet 1020", "HP LaserJet 1020 Plus", "Other (write below)"]
+    validations:
+      required: true
+  - type: dropdown
+    id: usb
+    attributes:
+      label: USB connection
+      options: ["Direct", "Through a USB hub"]
+  - type: input
+    id: driver-version
+    attributes:
+      label: Driver version (from Check Status) and package file name
+  - type: input
+    id: existing-driver
+    attributes:
+      label: Other HP driver installed before (e.g. hp-legacy-mac)?
+  - type: textarea
+    id: installer
+    attributes:
+      label: Installer result
+      description: Any macOS warning, exact wording.
+  - type: textarea
+    id: firmware
+    attributes:
+      label: Firmware setup method and result
+      description: Automatic download / release file / own copy — and the exact message.
+  - type: textarea
+    id: status
+    attributes:
+      label: Check Status output
+      render: text
+  - type: textarea
+    id: prints
+    attributes:
+      label: Test print results (text / PDF / multi-page / image)
+  - type: textarea
+    id: alignment
+    attributes:
+      label: A4 alignment
+      description: Gaps A (left), B (right), C (top), D (bottom) from the alignment test page, and your current offset. A photo of the whole page lying flat helps.
+  - type: input
+    id: power-cycle
+    attributes:
+      label: Print after switching the printer off and on
+  - type: textarea
+    id: errors
+    attributes:
+      label: Exact warnings / errors
+  - type: input
+    id: uninstall
+    attributes:
+      label: Uninstall result (if tried)
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes

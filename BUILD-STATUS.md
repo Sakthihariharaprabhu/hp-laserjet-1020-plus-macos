@@ -1,35 +1,32 @@
-# Build status — engineering test candidate
+# Build and test status
 
-Last checked: 2026-10-25
+Last updated: 2026-11-14 · Version on this branch: see [`VERSION`](VERSION) (`0.2.0-test.1`)
 
-## Latest confirmed CI build
+## Summary
 
-- Workflow run: [#21 — Build macOS candidate](https://github.com/Sakthihariharaprabhu/hp-laserjet-1020-plus-macos/actions/runs/40209197664)
-- Branch: `main`
-- Source commit built: `2f7666359e2a127e7bb82bd8612181d2fc098bdf`
-- Result: **success**
-- Artifact: `hp-laserjet-1020-plus-macos-arm64-candidate`
-- Artifact ID: `12604783804`
-- Artifact ZIP SHA-256: `237b441377a433d22001d81c432c82734aab0b68b53299787ccbd8a86bffe9c4`
-- Artifact expiry: 2026-11-08 15:56 UTC
+| Area | Status |
+|---|---|
+| CI build (Apple Silicon runner) | Passes — see the latest "Build macOS candidate" run on the pull request |
+| Installer `v0.1.0-test.1` on a real Mac | ✅ Installed (after **Open Anyway**) on one MacBook Air, Apple Silicon |
+| Package contents review | ✅ All programs arm64, 21 libraries bundled, no Homebrew dependencies, Ghostscript resources present, A4 PPD, filter correct, firmware checksum gate pinned, uninstaller in the app |
+| Package checksum | ✅ Matched its `.sha256` (the old sidecar contained the CI runner's path, so `shasum -c` failed — fixed in 0.2.0) |
+| Physical printing | ✅ One page printed on an HP LaserJet 1020 Plus via a USB hub |
+| A4 alignment | ❌ Extra space on the LEFT, content cut on the RIGHT (also with the older hp-legacy-mac driver). 0.2.0 adds an adjustable offset (default −3.0 mm, an estimate) and a calibration page — **not yet confirmed on paper** |
+| Automatic firmware download | ❌ Failed in 0.1.0 (quirinux.org timed out). Also found: quirinux's file is a different firmware build and could never pass the checksum. 0.2.0 downloads from this project's release instead — **not yet tested on a Mac** |
+| Automatic firmware setup during install (0.2.0) | ⏳ New; works only once the repository is public (download source is the public release). Falls back to opening the app |
+| "Select an existing firmware file" | ✅ Works with the tested file (SHA-256 `c14fdf0a…87cd01`) |
+| Firmware reload after power cycle | ⏳ Not yet tested (the maintainer's test Mac did not have firmware setup completed) |
+| 0.2.0 app buttons (Check Status, test page, Adjust Print Position) | ⏳ Built and checked in CI; not yet clicked on a real Mac |
+| Signing / notarization | ❌ Unsigned, not notarized |
 
-## What the successful run establishes
+**Tested configurations: one Mac + one printer.** This is not proof that other Macs, macOS versions or printers work.
 
-- The workflow ran on an Apple Silicon ARM64 macOS runner.
-- The pinned driver bundle was built.
-- Static/source checks and bundle checks passed.
-- The bundled Ghostscript-to-`foo2zjs` conversion pipeline generated a non-empty test stream.
-- An unsigned candidate installer package and checksum sidecar were uploaded as a workflow artifact.
+## What CI checks
 
-## What it does not establish
+- Builds the bundle on an Apple Silicon arm64 runner from pinned foo2zjs source.
+- Static checks (`scripts/test-source.sh`): script syntax, version consistency, checksum-sidecar format, print-offset maths, app actions present, no firmware in the repo.
+- Bundle structure (`scripts/check-bundle.sh`), including that `BUILD-MANIFEST.txt` has real line breaks.
+- Pipeline smoke test: PostScript and the A4 calibration PDF are converted to printer data with the same arguments the filter now uses (offset crop, fixed A4 media, fit-to-page).
+- Builds the unsigned `.pkg` and verifies its `.sha256` with `shasum -c`.
 
-- The installer has not been validated end-to-end on a physical Mac.
-- Printing to a physical HP LaserJet 1020 / 1020 Plus has not been confirmed.
-- Firmware acquisition, firmware upload after power cycle, LaunchDaemon behavior, USB/CUPS queue management and recovery paths have not been physically validated.
-- The package is not signed or notarized and is not ready for general distribution.
-
-The artifact ZIP checksum above applies to the downloaded **Actions ZIP**, not to the individual `.pkg`. Use the sidecar `.sha256` inside the artifact to verify the package itself.
-
-## Current decision
-
-**Engineering test candidate only.** Do not describe it as a stable driver or confirmed macOS 26-compatible release. See [test instructions](TESTING.md), [security notes](docs/SECURITY.md), and the [release checklist](docs/RELEASE-CHECKLIST.md).
+CI cannot test USB, CUPS queue behaviour, firmware upload or paper output.

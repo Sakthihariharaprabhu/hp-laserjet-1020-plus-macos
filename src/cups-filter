@@ -10,23 +10,34 @@ case "$QUEUE" in ''|*[!A-Za-z0-9_.-]*) echo "hp-legacy-mac-plus: invalid queue n
 CONF="$BASE/queues/$QUEUE.conf"
 GS="$BASE/bin/gs"
 WRAPPER="$BASE/bin/foo2zjs-wrapper"
+CLIP="$BASE/bin/hp1020-clip"
 [ -r "$CONF" ] || { echo "hp-legacy-mac-plus: queue configuration missing" >&2; exit 1; }
 [ -x "$GS" ] || { echo "hp-legacy-mac-plus: Ghostscript is missing" >&2; exit 1; }
 [ -x "$WRAPPER" ] || { echo "hp-legacy-mac-plus: foo2zjs wrapper is missing" >&2; exit 1; }
 
-# Parse a strict two-key config. Never source it as shell code.
+# Parse a strict key=value config. Never source it as shell code.
+# Offsets are print-position corrections in millimetres (see bin/hp1020-clip).
+# A missing offset key means 0 (no correction), which keeps older queue files working.
 DRIVER_ID=
 COLOR_CAPABLE=
+H_OFFSET_MM=0
+V_OFFSET_MM=0
 while IFS='=' read -r key value; do
   case "$key" in
     DRIVER_ID) DRIVER_ID=$(printf '%s' "$value" | /usr/bin/sed 's/^"//; s/"$//') ;;
     COLOR_CAPABLE) COLOR_CAPABLE=$value ;;
+    HORIZONTAL_OFFSET_MM) H_OFFSET_MM=$value ;;
+    VERTICAL_OFFSET_MM) V_OFFSET_MM=$value ;;
     '') ;;
     *) echo "hp-legacy-mac-plus: unsupported queue configuration key" >&2; exit 1 ;;
   esac
 done < "$CONF"
 [ "$DRIVER_ID" = hp1020 ] || { echo "hp-legacy-mac-plus: unsupported driver id" >&2; exit 1; }
 [ "$COLOR_CAPABLE" = 0 ] || { echo "hp-legacy-mac-plus: invalid color setting" >&2; exit 1; }
+if [ -x "$CLIP" ]; then
+  /bin/sh "$CLIP" check "$H_OFFSET_MM" || { echo "hp-legacy-mac-plus: ignoring invalid HORIZONTAL_OFFSET_MM" >&2; H_OFFSET_MM=0; }
+  /bin/sh "$CLIP" check "$V_OFFSET_MM" || { echo "hp-legacy-mac-plus: ignoring invalid VERTICAL_OFFSET_MM" >&2; V_OFFSET_MM=0; }
+fi
 
 # CUPS sandbox cannot reliably execute Homebrew binaries, so use the private bundle.
 export PATH="$BASE/bin:/usr/bin:/bin:/usr/sbin:/sbin"
@@ -64,17 +75,34 @@ for option in $OPTIONS; do
   esac
 done
 
+# Page clipping/offset for the 1020 family: computed from the queue's mm
+# correction. Only A4 and Letter are offered; both use the same 4 mm base crop.
+XRES=1200
+[ "$RES_OPT" = -r600x600 ] && XRES=600
+CLIP_ARGS=
+if [ -x "$CLIP" ]; then
+  CLIP_ARGS=$(/bin/sh "$CLIP" args "$XRES" "$H_OFFSET_MM" "$V_OFFSET_MM") || CLIP_ARGS=
+fi
+case "$CLIP_ARGS" in
+  '-u '[0-9]*x[0-9]*' -l '[0-9]*x[0-9]*) ;;
+  *) CLIP_ARGS= ;;   # fall back to the wrapper's built-in default crop
+esac
+
+# Ghostscript: keep the page frame fixed to the selected paper (-dFIXEDMEDIA)
+# and scale any differently sized PDF page to fit it (-dPDFFitPage) instead of
+# letting the PDF resize the raster, which would mis-align the bitmap.
+GS_FIXED='-dFIXEDMEDIA'
+GS_FIT='-dPDFFitPage'
+
 # Use the 1020-family ZJS profile. The wrapper handles Ghostscript conversion.
 # Only the mapped, allowlisted options above reach the driver; raw CUPS options
-# and job metadata are never evaluated as shell code.
+# and job metadata are never evaluated as shell code. CLIP_ARGS is built only
+# from validated numbers and is intentionally word-split here.
 if [ "${6:-}" ]; then
   [ -f "$6" ] || { echo "hp-legacy-mac-plus: CUPS input file is missing" >&2; exit 1; }
-  if [ "$QUALITY_OPT" = -t ]; then
-    exec "$WRAPPER" -z1 -P -L0 "$PAPER_OPT" "$RES_OPT" -t -b "$GS" < "$6"
-  fi
-  exec "$WRAPPER" -z1 -P -L0 "$PAPER_OPT" "$RES_OPT" -b "$GS" < "$6"
+  exec < "$6"
 fi
 if [ "$QUALITY_OPT" = -t ]; then
-  exec "$WRAPPER" -z1 -P -L0 "$PAPER_OPT" "$RES_OPT" -t -b "$GS"
+  exec "$WRAPPER" -z1 -P -L0 "$PAPER_OPT" "$RES_OPT" $CLIP_ARGS -g "$GS_FIXED" -g "$GS_FIT" -t -b "$GS"
 fi
-exec "$WRAPPER" -z1 -P -L0 "$PAPER_OPT" "$RES_OPT" -b "$GS"
+exec "$WRAPPER" -z1 -P -L0 "$PAPER_OPT" "$RES_OPT" $CLIP_ARGS -g "$GS_FIXED" -g "$GS_FIT" -b "$GS"

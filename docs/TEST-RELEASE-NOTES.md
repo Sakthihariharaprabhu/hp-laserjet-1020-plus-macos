@@ -1,3 +1,23 @@
+# Draft GitHub pre-release notes (template)
+
+> Fill in for each test release. The tag must be `v` + the contents of `VERSION` (currently `v0.2.0-test.1`).
+
+## What's new in 0.2.0-test.1
+
+- Fixed: `.sha256` file now contains only the file name, so `shasum -a 256 -c` works on a user's Mac.
+- Fixed: package version and release tag now come from one `VERSION` file.
+- Fixed: `BUILD-MANIFEST.txt` uses real line breaks.
+- New: adjustable print position (mm) + A4 alignment test page, both in the Firmware Setup app.
+- New: **Check Status** button.
+- Firmware download: longer timeout, one retry, release-hosted source, clear message with **Select a File Now** when it fails.
+- Firmware is a separate asset on the `firmware-hp1020` release (not in the package).
+
+## Assets to attach
+
+- `HP-LaserJet-1020-Plus-macOS-arm64-unsigned.pkg` and its `.sha256` from the successful workflow artifact (verify with `shasum -a 256 -c` after extracting).
+
+## Previous notes (v0.1.0-test.1)
+
 # v0.1.0-test.1 — draft GitHub pre-release notes
 
 > **Do not publish these notes until the release assets have been attached and the package SHA-256 has been checked.**

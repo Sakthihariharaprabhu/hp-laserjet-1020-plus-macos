@@ -1,0 +1,92 @@
+%!PS-Adobe-3.0
+%%Title: HP LaserJet 1020 A4 alignment test page
+%%BoundingBox: 0 0 595 842
+%%DocumentMedia: A4 595.276 841.89 0 () ()
+%%Pages: 1
+%%EndComments
+% Source for calibration/a4-alignment-test.pdf. Regenerate with:
+%   gs -q -dBATCH -dNOPAUSE -dSAFER -sDEVICE=pdfwrite -sPAPERSIZE=a4 -dFIXEDMEDIA \
+%      -o calibration/a4-alignment-test.pdf calibration/a4-alignment-test.ps
+% All geometry is in millimetres from the paper edges (origin = bottom-left).
+%%BeginSetup
+<< /PageSize [595.276 841.89] >> setpagedevice
+%%EndSetup
+%%Page: 1 1
+/mm { 72 mul 25.4 div } def
+/W 210 def /H 297 def
+0.25 setlinewidth
+/F { /Helvetica findfont exch scalefont setfont } def
+/cshow { dup stringwidth pop 2 div neg 0 rmoveto show } def
+/nstr 4 string def
+/ln { % x1 y1 x2 y2 (mm)
+  4 dict begin /y2 exch def /x2 exch def /y1 exch def /x1 exch def
+  newpath x1 mm y1 mm moveto x2 mm y2 mm lineto stroke end } def
+
+% Tick length: 1 mm ticks 2 mm long, 5 mm ticks 3.5 mm, 10 mm ticks 5 mm.
+/ticklen { dup 10 mod 0 eq { pop 5 } { 5 mod 0 eq { 3.5 } { 2 } ifelse } ifelse } def
+
+% ---- Top and bottom rulers: distance from the LEFT paper edge (0..210 mm)
+0 1 210 {
+  /i exch def /t i ticklen def
+  i H i H t sub ln          % top
+  i 0 i t ln                % bottom
+  i 10 mod 0 eq i 0 gt and i 210 lt and {
+    5 F
+    i mm H 8.5 sub mm moveto i nstr cvs cshow
+    i mm 6.5 mm moveto i nstr cvs cshow
+  } if
+} for
+
+% ---- Left and right rulers: distance from the TOP paper edge (0..297 mm)
+0 1 297 {
+  /i exch def /t i ticklen def /y H i sub def
+  0 y t y ln                % left
+  W y W t sub y ln          % right
+  i 10 mod 0 eq i 0 gt and i 297 lt and {
+    5 F
+    6.5 mm y 0.8 sub mm moveto i nstr cvs show
+    W 6.5 sub mm y 0.8 sub mm moveto i nstr cvs dup stringwidth pop neg 0 rmoveto show
+  } if
+} for
+
+% ---- Frame exactly 10 mm inside every paper edge
+0.6 setlinewidth
+newpath 10 mm 10 mm moveto 200 mm 10 mm lineto 200 mm 287 mm lineto 10 mm 287 mm lineto closepath stroke
+0.25 setlinewidth
+
+% ---- Centre cross at 105 mm x 148.5 mm, with a 10 mm circle
+0.5 setlinewidth
+105 128.5 105 168.5 ln
+85 148.5 125 148.5 ln
+newpath 105 mm 148.5 mm 5 mm 0 360 arc stroke
+0.25 setlinewidth
+5 F 107 mm 150 mm moveto (centre: 105 mm from left/right, 148.5 mm from top/bottom) show
+
+% ---- Edge labels
+7 F
+105 mm 276 mm moveto (TOP) cshow
+105 mm 18 mm moveto (BOTTOM) cshow
+16 mm 148.5 mm moveto (LEFT) show
+194 mm 148.5 mm moveto (RIGHT) dup stringwidth pop neg 0 rmoveto show
+
+% ---- Instructions
+/Helvetica-Bold findfont 11 scalefont setfont
+105 mm 255 mm moveto (HP LaserJet 1020 - A4 alignment test page) cshow
+8 F
+/lines [
+  (Print on plain A4 paper at 100% scale. Then, with a ruler, measure the gap)
+  (between each paper edge and the thick frame line. On a perfect print every gap is 10 mm.)
+  ()
+  (A = gap at LEFT     B = gap at RIGHT     C = gap at TOP     D = gap at BOTTOM)
+  ()
+  (Horizontal correction = (B - A) / 2      e.g. A = 13, B = 7  ->  -3 mm  (move left))
+  (Vertical correction     = (D - C) / 2      e.g. C = 12, D = 8  ->  -2 mm  (move up))
+  ()
+  (Enter the numbers in: HP LaserJet Firmware Setup > Adjust Print Position,)
+  (then print this page again to check. Or send a photo of the whole page)
+  (lying flat, with all four paper edges visible, in a "Printer problem" issue.)
+] def
+/y 244 def
+lines { 30 mm y mm moveto show /y y 4.5 sub def } forall
+showpage
+%%EOF

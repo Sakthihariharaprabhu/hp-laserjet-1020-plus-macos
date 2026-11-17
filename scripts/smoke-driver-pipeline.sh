@@ -41,8 +41,28 @@ showpage
 %%EOF
 PS
 
-"$BUNDLE/bin/foo2zjs-wrapper" -z1 -P -L0 -p9 -r1200x600 -b "$BUNDLE/bin/gs" < "$WORK/smoke.ps" > "$WORK/smoke.zjs"
-[ -s "$WORK/smoke.zjs" ] || { echo "Driver pipeline produced an empty output stream." >&2; exit 1; }
-SIZE=$(wc -c < "$WORK/smoke.zjs" | tr -d ' ')
-[ "$SIZE" -gt 128 ] || { echo "Driver pipeline output is unexpectedly small ($SIZE bytes)." >&2; exit 1; }
-printf 'Driver pipeline smoke test passed; generated %s bytes of ZjStream data.\n' "$SIZE"
+run_case() { # name input wrapper-args...
+  name=$1; input=$2; shift 2
+  "$BUNDLE/bin/foo2zjs-wrapper" "$@" -b "$BUNDLE/bin/gs" < "$input" > "$WORK/$name.zjs"
+  [ -s "$WORK/$name.zjs" ] || { echo "Driver pipeline produced an empty output stream ($name)." >&2; exit 1; }
+  size=$(wc -c < "$WORK/$name.zjs" | tr -d ' ')
+  [ "$size" -gt 1000 ] || { echo "Driver pipeline output is unexpectedly small ($name: $size bytes)." >&2; exit 1; }
+  printf 'Pipeline case %s: %s bytes of ZjStream data.\n' "$name" "$size"
+  SIZE=$size
+}
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+CLIP="$BUNDLE/bin/hp1020-clip"
+[ -x "$CLIP" ] || CLIP="$ROOT/src/hp1020-clip"
+# 1. Original arguments (wrapper default crop).
+run_case plain "$WORK/smoke.ps" -z1 -P -L0 -p9 -r1200x600
+# 2. Exactly what the CUPS filter now sends: computed crop for -3 mm, fixed A4 media, fit-to-page.
+CLIP_ARGS=$(sh "$CLIP" args 1200 -3.0 0)
+# shellcheck disable=SC2086
+run_case filter-args "$WORK/smoke.ps" -z1 -P -L0 -p9 -r1200x600 $CLIP_ARGS -g -dFIXEDMEDIA -g -dPDFFitPage
+# 3. The A4 calibration PDF at 600 dpi with a vertical correction too.
+if [ -f "$ROOT/calibration/a4-alignment-test.pdf" ]; then
+  CLIP_ARGS=$(sh "$CLIP" args 600 -10 -2)
+  # shellcheck disable=SC2086
+  run_case calibration-pdf "$ROOT/calibration/a4-alignment-test.pdf" -z1 -P -L0 -p9 -r600x600 $CLIP_ARGS -g -dFIXEDMEDIA -g -dPDFFitPage
+fi
+printf 'Driver pipeline smoke test passed (last case %s bytes).\n' "$SIZE"

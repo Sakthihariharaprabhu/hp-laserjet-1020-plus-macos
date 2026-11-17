@@ -1,22 +1,52 @@
-# Firmware workflow (automatic acquisition option; review required before release)
+# Firmware workflow
 
-The HP LaserJet 1020 family requires firmware upload after printer power-on. This project does not commit or redistribute HP's proprietary firmware binary. The GUI offers two methods:
+The HP LaserJet 1020 family loses its firmware at every power-off and needs `sihp1020.dl` uploaded after power-on. HP's firmware is **never committed to git and never placed inside the `.pkg`**. It is published as a separate asset on the GitHub release [`firmware-hp1020`](https://github.com/Sakthihariharaprabhu/hp-laserjet-1020-plus-macos/releases/tag/firmware-hp1020).
 
-1. **Download and verify firmware automatically.** The app retrieves `sihp1020.tar.gz` from `https://www.quirinux.org/printers/`, the HTTPS mirror referenced by OpenPrinting's `foo2zjs/getweb` helper; it streams only `sihp1020.img` to a private temporary directory, runs the bundled OpenPrinting `arm2hpdl` converter, and checks that the resulting `sihp1020.dl` has SHA-256 `c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01`. This requires internet access and relies on a community mirror rather than an official HP download endpoint.
-2. **Select an existing local file.** The same SHA-256 validation runs before installation. The project does not upload the selected file.
+> HP firmware, copyright HP, provided for owners of this printer; removed on request.
 
-The downloader runs as the logged-in user and does not require administrator privileges. The privileged setup helper independently rechecks the checksum before copying the firmware into a root-owned local directory. It then configures a LaunchDaemon to upload the firmware through a separate raw queue when USB is detected or re-detected. The monitor is designed to pause the normal queue while firmware is uploaded and require CUPS to confirm completion before resuming it.
+## The one accepted file
 
-## Security checks
+| | |
+|---|---|
+| File | `sihp1020.dl` (126,151 bytes, header date 2004-11) |
+| SHA-256 | `c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01` |
+| Evidence | Physically used with an HP LaserJet 1020 Plus by the maintainer |
 
-- HTTPS is required, and redirects are restricted to HTTPS.
-- The helper streams only the expected archive member rather than extracting arbitrary archive paths.
-- It installs nothing unless the converted download matches the known SHA-256.
-- The temporary downloaded file is removed after the GUI completes setup.
-- No firmware binary is committed to the repository or embedded in the public installer.
+The same SHA-256 is pinned in `fetch-firmware.sh`, `setup-firmware.sh` (privileged re-check), `firmware-watch.sh` (re-check before every upload) and `status.sh`.
 
-## Important limitations
+## Ways to get it (GUI app → Set Up Firmware)
 
-- A matching hash protects against a different or corrupted payload; it does not certify the mirror itself or grant redistribution rights.
-- The mirror can change, go offline, or stop serving the file. If download or checksum validation fails, the app stops and offers no bypass.
-- The firmware setup app, downloader, LaunchDaemon, CUPS behavior, recovery path, and failure modes have not yet been physically validated on a current macOS and must be tested before general distribution.
+1. **Download and verify automatically.** `fetch-firmware.sh` tries each source in its `SOURCES` list in order, with a 30 s connect timeout, 3 min limit and one retry per source. Every download must match the SHA-256; anything else is rejected and nothing is installed. If all sources fail, the app shows what happened for each source and offers **Select a File Now** or **Open Instructions** (the README firmware section).
+2. **Select an existing file** — downloaded from the release, from an old HP / hp-legacy-mac installation, or from Linux foo2zjs (`/usr/share/foo2zjs/firmware/sihp1020.dl`). Same checksum check.
+
+### Download sources (checked 2026-11-14)
+
+| Source | Result | Used? |
+|---|---|---|
+| This project's release `firmware-hp1020` (`.dl`) | Identical file (verified after upload) | **Yes** — only works once the repository is public |
+| `https://www.quirinux.org/printers/sihp1020.tar.gz` (OpenPrinting `getweb`) | Timed out from the maintainer's network. An archived copy (Wayback Machine, 2026-11-05) converts with the pinned `arm2hpdl` to a **different firmware build**: header date 2005-03-09, 128,431 bytes, SHA-256 `133b21fe0cb24bfe53e2eff2f00a82cce4beb970749049661ade7a6801f22663` | **No** — it can never pass the checksum, so per the "identical file only" rule it is not listed |
+| Wayback Machine copy of the above | Same different build | No |
+| `foo2zjs.rkkda.com` (original foo2zjs site) | Domain no longer resolves | No |
+| Other GitHub copies (e.g. Orthodox2000/hp-laserjet-1020-linux, koenkooi/foo2zjs `sihp1020.img`) | Do not match the accepted checksum | No — untrusted until physically tested |
+
+The 2005-03-09 build is probably also valid 1020 firmware, but it has not been tested. Accepting it would mean adding a second reviewed checksum after a physical test (see [ROADMAP](../ROADMAP.md)).
+
+## What Set Up Firmware does
+
+1. The downloader runs as the logged-in user (no admin rights) in a private temporary folder.
+2. `setup-firmware.sh` runs as root (password prompt), re-checks the checksum, copies the file to `/Library/Printers/hp-legacy-mac-plus/firmware/`, creates a raw queue `<queue>_Firmware` and a LaunchDaemon.
+3. `firmware-watch.sh` (LaunchDaemon) polls USB every 5 s. When the printer appears, it pauses the normal queue, sends the firmware through the raw queue, waits for CUPS to report the job **completed**, then resumes the normal queue. If the job does not complete, the queue stays paused (safe default) and the event is logged to `/var/log/hp-legacy-mac-plus-firmware.log`.
+
+## CUPS raw queue — deprecated
+
+The firmware upload uses a CUPS **raw** queue (`lpadmin -m raw`). CUPS has deprecated raw queues (and printer drivers in general). They still work on current macOS, but **a future macOS release may remove them**, which would break the automatic firmware reload. The likely replacement is uploading directly to the USB device; see [ROADMAP](../ROADMAP.md).
+
+## Limits
+
+- A matching hash proves the bytes are the reviewed bytes; it does not establish any right to use or redistribute HP firmware.
+- The release download only works while the repository is public and the asset exists.
+- Power-cycle reload has not yet been physically tested on 0.2.0.
+
+## Backup copy (maintainer only)
+
+A private backup repository, `hp-laserjet-1020-firmware-backup`, holds the same firmware as a release asset (not in git) and links back to this project. If the public `firmware-hp1020` asset ever has to be removed, the maintainer can use the backup to decide on a replacement source; the checksum gate stays the same.

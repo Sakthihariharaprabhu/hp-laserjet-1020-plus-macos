@@ -1,0 +1,25 @@
+#!/bin/sh
+# Read one value from a model definition file without ever executing it.
+# Usage: model-get <model.conf> <KEY>
+# Prints the value (everything after the first "=") or exits non-zero.
+set -eu
+[ "$#" -eq 2 ] || { echo "usage: model-get <model.conf> <KEY>" >&2; exit 2; }
+CONF=$1
+KEY=$2
+case "$KEY" in
+  MODEL_ID|MODEL_NAME|USB_MATCH|FIRMWARE_FILE|FIRMWARE_SHA256|FIRMWARE_URL) ;;
+  *) echo "model-get: unknown key" >&2; exit 2 ;;
+esac
+[ -f "$CONF" ] && [ ! -L "$CONF" ] || { echo "model-get: model file missing" >&2; exit 1; }
+VALUE=$(/usr/bin/awk -v k="$KEY" '
+  index($0, k "=") == 1 { sub(/^[^=]*=/, ""); print; found = 1; exit }
+  END { exit !found }' "$CONF") || { echo "model-get: $KEY not set" >&2; exit 1; }
+# Strict per-key validation: a bad value is an error, never "best effort".
+case "$KEY" in
+  MODEL_ID) printf '%s\n' "$VALUE" | /usr/bin/grep -Eq '^[a-z0-9]{2,24}$' || exit 1 ;;
+  FIRMWARE_FILE) printf '%s\n' "$VALUE" | /usr/bin/grep -Eq '^[A-Za-z0-9_.-]{1,64}$' || exit 1 ;;
+  FIRMWARE_SHA256) printf '%s\n' "$VALUE" | /usr/bin/grep -Eq '^[0-9a-f]{64}$' || exit 1 ;;
+  FIRMWARE_URL) printf '%s\n' "$VALUE" | /usr/bin/grep -Eq '^https://[A-Za-z0-9._~:/?#@!$&()*+,;=%-]+$' || exit 1 ;;
+  MODEL_NAME|USB_MATCH) [ -n "$VALUE" ] || exit 1 ;;
+esac
+printf '%s\n' "$VALUE"

@@ -5,7 +5,7 @@ umask 077
 
 BASE="/Library/Printers/hp-legacy-mac-plus"
 FILTER="/usr/libexec/cups/filter/hp-legacy-mac-plus"
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 BUNDLE="${HP_LEGACY_BUNDLE:-$SCRIPT_DIR/dist/bundle}"
 QUEUE="${HP_LEGACY_QUEUE:-HP_LaserJet_1020_Plus_Candidate}"
 # Starting print-position correction in mm (negative = move content left).

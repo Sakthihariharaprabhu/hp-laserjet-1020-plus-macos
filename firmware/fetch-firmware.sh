@@ -22,7 +22,7 @@ EXPECTED_SHA256=c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01
 SOURCES='
 dl|GitHub Release (this project)|https://github.com/Sakthihariharaprabhu/hp-laserjet-1020-plus-macos/releases/download/firmware-hp1020/sihp1020.dl
 '
-HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HERE=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 ARM2HPDL="$HERE/arm2hpdl"
 
 fail() { printf '%s\n' "$*" >&2; exit 1; }
@@ -34,6 +34,7 @@ done
 TMPROOT=${TMPDIR:-/tmp}
 WORK=$(/usr/bin/mktemp -d "$TMPROOT/hp1020-firmware.XXXXXX")
 /bin/chmod 700 "$WORK"
+# shellcheck disable=SC2329  # runs through the EXIT trap
 cleanup_on_error() {
   result=$?
   if [ "$result" -ne 0 ]; then /bin/rm -rf "$WORK"; fi

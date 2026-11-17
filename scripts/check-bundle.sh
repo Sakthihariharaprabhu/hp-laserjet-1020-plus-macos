@@ -17,10 +17,10 @@ done
 [ -x "$BUNDLE/cups-filter" ] || fail "cups-filter is not executable"
 [ -x "$BUNDLE/firmware-watch.sh" ] || fail "firmware-watch.sh is not executable"
 if find "$BUNDLE" -type l -print | grep . >/dev/null 2>&1; then fail "symbolic links are not permitted"; fi
-if find "$BUNDLE" -type f -perm -111 -print | grep -E '(^|/)(install|uninstall)\\.sh$' >/dev/null 2>&1; then
+if find "$BUNDLE" -type f -perm -111 -print | grep -E '(^|/)(install|uninstall)\.sh$' >/dev/null 2>&1; then
   fail "installer scripts should not be nested inside the driver payload"
 fi
-if find "$BUNDLE" -type f -print | grep -Ei 'sihp1020\\.dl|/firmware(\\.|$)|\\.dl$' >/dev/null 2>&1; then
+if find "$BUNDLE" -type f -print | grep -Ei 'sihp1020\.dl|/firmware(\.|$)|\.dl$' >/dev/null 2>&1; then
   fail "firmware must not be redistributed in this package"
 fi
 if ! gunzip -t "$BUNDLE/ppd/HP-LaserJet_1020.ppd.gz" >/dev/null 2>&1; then fail "PPD gzip is corrupt"; fi

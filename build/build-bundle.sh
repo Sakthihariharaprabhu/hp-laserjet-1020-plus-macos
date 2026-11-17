@@ -4,7 +4,7 @@
 set -eu
 umask 077
 
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 ARCH=$(uname -m)
 [ "$(uname -s)" = Darwin ] || { echo "Build requires macOS." >&2; exit 1; }
 [ "$ARCH" = arm64 ] || { echo "Only Apple Silicon arm64 is supported by this build." >&2; exit 1; }

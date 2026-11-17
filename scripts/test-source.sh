@@ -1,7 +1,8 @@
 #!/bin/sh
+# shellcheck disable=SC2016  # patterns below are literal source text, not expansions
 # Fast static checks; deliberately does not claim to validate binaries or printing.
 set -eu
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 
 for file in install.sh uninstall.sh src/cups-filter build/build-bundle.sh \
   scripts/check-bundle.sh scripts/check-macho-deps.sh scripts/collect-source-archives.sh \

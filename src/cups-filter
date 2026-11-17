@@ -103,6 +103,8 @@ if [ "${6:-}" ]; then
   exec < "$6"
 fi
 if [ "$QUALITY_OPT" = -t ]; then
+  # shellcheck disable=SC2086  # CLIP_ARGS is validated numbers, split on purpose
   exec "$WRAPPER" -z1 -P -L0 "$PAPER_OPT" "$RES_OPT" $CLIP_ARGS -g "$GS_FIXED" -g "$GS_FIT" -t -b "$GS"
 fi
+# shellcheck disable=SC2086  # CLIP_ARGS is validated numbers, split on purpose
 exec "$WRAPPER" -z1 -P -L0 "$PAPER_OPT" "$RES_OPT" $CLIP_ARGS -g "$GS_FIXED" -g "$GS_FIT" -b "$GS"

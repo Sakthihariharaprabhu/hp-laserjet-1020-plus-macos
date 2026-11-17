@@ -2,7 +2,7 @@
 # Build an Apple Silicon installer package on macOS. Signing/notarization is optional for CI previews.
 set -eu
 umask 077
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 [ "$(uname -s)" = Darwin ] || { echo 'Release packaging requires macOS.' >&2; exit 1; }
 [ "$(uname -m)" = arm64 ] || { echo 'Only arm64 release packaging is supported.' >&2; exit 1; }
 BUNDLE="$ROOT/dist/bundle"

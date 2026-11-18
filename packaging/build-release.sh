@@ -51,7 +51,7 @@ cp "$BUNDLE/bin/arm2hpdl" "$WORK/app/Contents/Resources/firmware/arm2hpdl"
 /usr/bin/osacompile -o "$WORK/app/HP LaserJet Firmware Setup.app" "$WORK/setup-firmware.applescript"
 APP="$WORK/app/HP LaserJet Firmware Setup.app"
 mkdir -p "$APP/Contents/Resources/firmware"
-cp "$WORK/app/Contents/Resources/firmware/"* "$APP/Contents/Resources/firmware/"
+cp -R "$WORK/app/Contents/Resources/firmware/"* "$APP/Contents/Resources/firmware/"
 # The uninstaller must live inside the actual compiled app bundle; the package postinstall removes its staging tree.
 cp "$ROOT/uninstall.sh" "$APP/Contents/Resources/uninstall.sh"
 cp "$ROOT/calibration/a4-alignment-test.pdf" "$APP/Contents/Resources/a4-alignment-test.pdf"

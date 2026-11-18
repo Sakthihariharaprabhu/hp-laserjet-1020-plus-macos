@@ -1,12 +1,13 @@
 #!/bin/sh
+# shellcheck disable=SC2016  # patterns below are literal source text, not expansions
 # Fast static checks; deliberately does not claim to validate binaries or printing.
 set -eu
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 
 for file in install.sh uninstall.sh src/cups-filter build/build-bundle.sh \
   scripts/check-bundle.sh scripts/check-macho-deps.sh scripts/collect-source-archives.sh \
   scripts/normalize-ppd.sh firmware/setup-firmware.sh firmware/fetch-firmware.sh firmware/firmware-watch.sh \
-  firmware/status.sh firmware/set-offset.sh src/hp1020-clip \
+  firmware/status.sh firmware/set-offset.sh src/hp1020-clip src/model-get \
   scripts/smoke-driver-pipeline.sh packaging/postinstall packaging/build-release.sh; do
   sh -n "$ROOT/$file"
 done
@@ -54,7 +55,15 @@ done
 grep -Fq 'HORIZONTAL_OFFSET_MM' "$ROOT/src/cups-filter"
 grep -Fq -- '-dFIXEDMEDIA' "$ROOT/src/cups-filter"
 grep -Fq 'HORIZONTAL_OFFSET_MM=%s' "$ROOT/install.sh"
-grep -Fq "EXPECTED_SHA256=c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01" "$ROOT/firmware/fetch-firmware.sh"
+# Model definition: single source of truth for the firmware checksum.
+MG="$ROOT/src/model-get"
+SHA=$(sh "$MG" "$ROOT/models/hp1020.conf" FIRMWARE_SHA256)
+[ "$SHA" = c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01 ] || { echo "Model checksum changed unexpectedly." >&2; exit 1; }
+sh "$MG" "$ROOT/models/hp1020.conf" FIRMWARE_URL | grep -q '^https://' || { echo "Firmware URL must be https." >&2; exit 1; }
+if sh "$MG" "$ROOT/models/hp1020.conf" NOT_A_KEY 2>/dev/null; then echo "model-get accepted an unknown key." >&2; exit 1; fi
+if grep -rIl "$SHA" "$ROOT" --exclude-dir=.git --exclude-dir=dist --exclude='*.md' --exclude=test-source.sh | grep -v '/models/' | grep .; then
+  echo "The firmware checksum must live only in models/*.conf (found it elsewhere above)." >&2; exit 1
+fi
 grep -Fq "make arm2hpdl" "$ROOT/build/build-bundle.sh"
 grep -Fq 'cp "$ROOT/firmware/fetch-firmware.sh" "$WORK/app/Contents/Resources/firmware/fetch-firmware.sh"' "$ROOT/packaging/build-release.sh"
 grep -Fq 'find "$APP" -type d -exec chmod 755' "$ROOT/packaging/build-release.sh"
@@ -108,8 +117,9 @@ if find "$ROOT" -type f -iname 'sihp1020.dl' | grep . >/dev/null 2>&1; then
   echo "Firmware must not be committed." >&2
   exit 1
 fi
-grep -q 'EXPECTED_SHA256=c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01' "$ROOT/firmware/setup-firmware.sh"
-grep -q 'EXPECTED=c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01' "$ROOT/firmware/firmware-watch.sh"
+grep -q 'FIRMWARE_SHA256' "$ROOT/firmware/setup-firmware.sh"
+grep -q 'FIRMWARE_SHA256' "$ROOT/firmware/firmware-watch.sh"
+grep -q 'FIRMWARE_SHA256' "$ROOT/firmware/fetch-firmware.sh"
 
 if grep -Fq "printf '%s\\\\n'" "$ROOT/build/build-bundle.sh" || grep -Fq "%s\\\\n' \"\$ARCH\"" "$ROOT/build/build-bundle.sh"; then
   echo "Build manifest must use real line breaks, not escaped literal backslash-n text." >&2
@@ -120,3 +130,13 @@ if grep -Fq '\\n' "$ROOT/scripts/collect-source-archives.sh"; then
   exit 1
 fi
 echo "Static source checks passed (not a build or print test)."
+
+# Uninstaller must forget the same package id the build uses, and filter must read media=.
+PKG_ID=$(sed -n 's/.*--identifier \([^ ]*\).*/\1/p' "$ROOT/packaging/build-release.sh")
+grep -Fq "pkgutil --forget $PKG_ID" "$ROOT/uninstall.sh" || { echo "uninstall.sh does not forget package $PKG_ID." >&2; exit 1; }
+grep -Fq 'media=iso_a4_210x297mm' "$ROOT/src/cups-filter" || { echo "Filter must understand media= options." >&2; exit 1; }
+
+# Firmware reload must be event driven, not a polling loop.
+grep -Fq 'com.apple.iokit.matching' "$ROOT/firmware/setup-firmware.sh" || { echo "LaunchDaemon must use USB event matching." >&2; exit 1; }
+if grep -q 'KeepAlive' "$ROOT/firmware/setup-firmware.sh"; then echo "LaunchDaemon must not use KeepAlive." >&2; exit 1; fi
+if grep -Eq '^while :' "$ROOT/firmware/firmware-watch.sh"; then echo "firmware-watch.sh must not loop forever." >&2; exit 1; fi

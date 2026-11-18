@@ -66,8 +66,8 @@ RES_OPT=-r1200x600
 QUALITY_OPT=
 for option in $OPTIONS; do
   case "$option" in
-    PageSize=A4) PAPER_OPT=-p9 ;;
-    PageSize=Letter) PAPER_OPT=-p1 ;;
+    PageSize=A4|PageSize=A4.*|media=A4|media=A4,*|media=iso_a4_210x297mm|media=iso_a4_210x297mm,*) PAPER_OPT=-p9 ;;
+    PageSize=Letter|PageSize=Letter.*|media=Letter|media=Letter,*|media=na_letter_8.5x11in|media=na_letter_8.5x11in,*) PAPER_OPT=-p1 ;;
     Resolution=600x600dpi) RES_OPT=-r600x600 ;;
     Resolution=1200x600dpi) RES_OPT=-r1200x600 ;;
     Quality=draft) QUALITY_OPT=-t ;;
@@ -103,6 +103,8 @@ if [ "${6:-}" ]; then
   exec < "$6"
 fi
 if [ "$QUALITY_OPT" = -t ]; then
+  # shellcheck disable=SC2086  # CLIP_ARGS is validated numbers, split on purpose
   exec "$WRAPPER" -z1 -P -L0 "$PAPER_OPT" "$RES_OPT" $CLIP_ARGS -g "$GS_FIXED" -g "$GS_FIT" -t -b "$GS"
 fi
+# shellcheck disable=SC2086  # CLIP_ARGS is validated numbers, split on purpose
 exec "$WRAPPER" -z1 -P -L0 "$PAPER_OPT" "$RES_OPT" $CLIP_ARGS -g "$GS_FIXED" -g "$GS_FIT" -b "$GS"

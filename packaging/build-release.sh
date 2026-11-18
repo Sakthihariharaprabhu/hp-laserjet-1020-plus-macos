@@ -2,7 +2,7 @@
 # Build an Apple Silicon installer package on macOS. Signing/notarization is optional for CI previews.
 set -eu
 umask 077
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 [ "$(uname -s)" = Darwin ] || { echo 'Release packaging requires macOS.' >&2; exit 1; }
 [ "$(uname -m)" = arm64 ] || { echo 'Only arm64 release packaging is supported.' >&2; exit 1; }
 BUNDLE="$ROOT/dist/bundle"
@@ -44,11 +44,14 @@ cp "$ROOT/firmware/firmware-watch.sh" "$WORK/app/Contents/Resources/firmware/fir
 cp "$ROOT/firmware/status.sh" "$WORK/app/Contents/Resources/firmware/status.sh"
 cp "$ROOT/firmware/set-offset.sh" "$WORK/app/Contents/Resources/firmware/set-offset.sh"
 cp "$ROOT/src/hp1020-clip" "$WORK/app/Contents/Resources/firmware/hp1020-clip"
+cp "$ROOT/src/model-get" "$WORK/app/Contents/Resources/firmware/model-get"
+mkdir -p "$WORK/app/Contents/Resources/firmware/models"
+cp "$ROOT/models/hp1020.conf" "$WORK/app/Contents/Resources/firmware/models/hp1020.conf"
 cp "$BUNDLE/bin/arm2hpdl" "$WORK/app/Contents/Resources/firmware/arm2hpdl"
 /usr/bin/osacompile -o "$WORK/app/HP LaserJet Firmware Setup.app" "$WORK/setup-firmware.applescript"
 APP="$WORK/app/HP LaserJet Firmware Setup.app"
 mkdir -p "$APP/Contents/Resources/firmware"
-cp "$WORK/app/Contents/Resources/firmware/"* "$APP/Contents/Resources/firmware/"
+cp -R "$WORK/app/Contents/Resources/firmware/"* "$APP/Contents/Resources/firmware/"
 # The uninstaller must live inside the actual compiled app bundle; the package postinstall removes its staging tree.
 cp "$ROOT/uninstall.sh" "$APP/Contents/Resources/uninstall.sh"
 cp "$ROOT/calibration/a4-alignment-test.pdf" "$APP/Contents/Resources/a4-alignment-test.pdf"

@@ -3,7 +3,7 @@ name: Build macOS candidate
 on:
   workflow_dispatch:
   push:
-    branches: [engineering-candidate]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -11,6 +11,25 @@ permissions:
   contents: read
 
 jobs:
+  lint-and-scan:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - name: Check out project (full history for the secret scan)
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          fetch-depth: 0
+      - name: Install linters
+        run: HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 brew install shellcheck gitleaks
+      - name: Shell lint (shellcheck)
+        run: shellcheck -s sh install.sh uninstall.sh packaging/postinstall packaging/build-release.sh build/build-bundle.sh src/* firmware/*.sh scripts/*.sh
+      - name: Static source checks
+        run: sh scripts/test-source.sh
+      - name: Secret scan (working tree and full history)
+        run: |
+          gitleaks dir --no-banner --redact .
+          gitleaks git --no-banner --redact .
+
   build-arm64:
     # GitHub documents macos-15 as an Apple Silicon arm64 hosted runner.
     runs-on: macos-15
@@ -32,6 +51,8 @@ jobs:
         run: sh scripts/smoke-driver-pipeline.sh dist/bundle
       - name: Build installer candidate
         run: sh packaging/build-release.sh
+      - name: Inspect package (no firmware inside, expected files present)
+        run: sh scripts/check-pkg.sh dist/*-unsigned.pkg
       - name: Publish candidate as workflow artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:

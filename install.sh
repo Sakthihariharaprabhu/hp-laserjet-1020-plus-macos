@@ -5,7 +5,7 @@ umask 077
 
 BASE="/Library/Printers/hp-legacy-mac-plus"
 FILTER="/usr/libexec/cups/filter/hp-legacy-mac-plus"
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 BUNDLE="${HP_LEGACY_BUNDLE:-$SCRIPT_DIR/dist/bundle}"
 QUEUE="${HP_LEGACY_QUEUE:-HP_LaserJet_1020_Plus_Candidate}"
 # Starting print-position correction in mm (negative = move content left).
@@ -32,6 +32,8 @@ die() { printf '%s\n' "HP LaserJet 1020 Plus: ERROR: $*" >&2; exit 1; }
 [ -f "$BUNDLE/cups-filter" ] && [ -x "$BUNDLE/cups-filter" ] || die "Bundle is missing executable cups-filter."
 [ -f "$BUNDLE/firmware-watch.sh" ] && [ -x "$BUNDLE/firmware-watch.sh" ] || die "Bundle is missing firmware-watch.sh."
 [ -f "$BUNDLE/bin/hp1020-clip" ] || die "Bundle is missing bin/hp1020-clip."
+[ -f "$BUNDLE/bin/model-get" ] || die "Bundle is missing bin/model-get."
+[ -f "$BUNDLE/models/hp1020.conf" ] || die "Bundle is missing the model definition."
 sh "$BUNDLE/bin/hp1020-clip" check "$DEFAULT_HORIZONTAL_OFFSET_MM" || die "Default horizontal offset is invalid."
 sh "$BUNDLE/bin/hp1020-clip" check "$DEFAULT_VERTICAL_OFFSET_MM" || die "Default vertical offset is invalid."
 
@@ -132,7 +134,7 @@ ditto "$STAGE/bundle" "$BASE"
 chown -R root:wheel "$BASE"
 find "$BASE" -type d -exec chmod 755 {} \;
 find "$BASE" -type f -exec chmod 644 {} \;
-chmod 755 "$BASE/bin/gs" "$BASE/bin/gsed" "$BASE/bin/dc" "$BASE/bin/foo2zjs" "$BASE/bin/foo2zjs-wrapper" "$BASE/bin/foo2zjs-pstops" "$BASE/cups-filter" "$BASE/firmware-watch.sh" "$BASE/bin/hp1020-clip"
+chmod 755 "$BASE/bin/gs" "$BASE/bin/gsed" "$BASE/bin/dc" "$BASE/bin/foo2zjs" "$BASE/bin/foo2zjs-wrapper" "$BASE/bin/foo2zjs-pstops" "$BASE/cups-filter" "$BASE/firmware-watch.sh" "$BASE/bin/hp1020-clip" "$BASE/bin/model-get"
 install -o root -g wheel -m 755 "$FILTER_TMP" "$FILTER"
 mkdir -p "$BASE/queues"
 chmod 755 "$BASE/queues"   # settings are not secret; lets the status check read them

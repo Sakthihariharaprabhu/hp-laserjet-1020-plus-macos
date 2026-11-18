@@ -4,7 +4,7 @@
 set -eu
 umask 077
 
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 ARCH=$(uname -m)
 [ "$(uname -s)" = Darwin ] || { echo "Build requires macOS." >&2; exit 1; }
 [ "$ARCH" = arm64 ] || { echo "Only Apple Silicon arm64 is supported by this build." >&2; exit 1; }
@@ -74,11 +74,14 @@ cp -RL "$BREW/share/ghostscript" "$B/share/ghostscript"
 ( cd "$B" && dylibbundler -of -b -x ./bin/dc -d ./libs/ -p @executable_path/../libs/ )
 cp "$ROOT/src/cups-filter" "$B/cups-filter"
 cp "$ROOT/src/hp1020-clip" "$B/bin/hp1020-clip"
+cp "$ROOT/src/model-get" "$B/bin/model-get"
+mkdir -p "$B/models"
+cp "$ROOT/models/hp1020.conf" "$B/models/hp1020.conf"
 cp "$ROOT/firmware/firmware-watch.sh" "$B/firmware-watch.sh"
 # Normalize runtime-readable resources: the build uses a private umask.
 find "$B" -type d -exec chmod 755 {} \;
 find "$B" -type f -exec chmod 644 {} \;
-chmod 755 "$B/bin/gs" "$B/bin/gsed" "$B/bin/dc" "$B/bin/foo2zjs" "$B/bin/foo2zjs-wrapper" "$B/bin/foo2zjs-pstops" "$B/bin/arm2hpdl" "$B/bin/hp1020-clip" "$B/cups-filter" "$B/firmware-watch.sh"
+chmod 755 "$B/bin/gs" "$B/bin/gsed" "$B/bin/dc" "$B/bin/foo2zjs" "$B/bin/foo2zjs-wrapper" "$B/bin/foo2zjs-pstops" "$B/bin/arm2hpdl" "$B/bin/hp1020-clip" "$B/bin/model-get" "$B/cups-filter" "$B/firmware-watch.sh"
 cp "$WORK/foo2zjs/COPYING" "$B/COPYING.foo2zjs"
 printf '%s\n' "$FOO2ZJS_COMMIT" > "$B/FOO2ZJS_COMMIT"
 VERSION=$(sed -n '1p' "$ROOT/VERSION")

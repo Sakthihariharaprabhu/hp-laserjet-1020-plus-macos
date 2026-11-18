@@ -2,13 +2,19 @@
 # Privileged helper launched by the GUI app; never asks users to open Terminal.
 set -eu
 umask 077
-EXPECTED_SHA256=c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01
 BASE=/Library/Printers/hp-legacy-mac-plus
 FIRMWARE_DIR="$BASE/firmware"
-FIRMWARE="$FIRMWARE_DIR/sihp1020.dl"
 WATCH="$BASE/firmware-watch.sh"
 
 fail() { printf 'HP LaserJet firmware setup failed: %s\n' "$*" >&2; exit 1; }
+# Read the model definition installed (root-owned) with the driver.
+MODEL_CONF="$BASE/models/hp1020.conf"
+MODEL_GET="$BASE/bin/model-get"
+[ -f "$MODEL_GET" ] && [ -f "$MODEL_CONF" ] || fail 'the driver is not installed completely (model definition missing).'
+EXPECTED_SHA256=$(/bin/sh "$MODEL_GET" "$MODEL_CONF" FIRMWARE_SHA256) || fail 'the model definition is invalid.'
+FIRMWARE_FILE=$(/bin/sh "$MODEL_GET" "$MODEL_CONF" FIRMWARE_FILE) || fail 'the model definition is invalid.'
+USB_MATCH=$(/bin/sh "$MODEL_GET" "$MODEL_CONF" USB_MATCH) || fail 'the model definition is invalid.'
+FIRMWARE="$FIRMWARE_DIR/$FIRMWARE_FILE"
 [ "$(id -u)" -eq 0 ] || fail 'administrator permission is required.'
 [ "$#" -eq 2 ] || fail 'the GUI must provide a firmware file and printer queue.'
 SOURCE=$1
@@ -22,7 +28,7 @@ STATE_DIR="/var/db/hp-legacy-mac-plus/$QUEUE"
 /usr/bin/lpstat -p "$QUEUE" >/dev/null 2>&1 || fail 'the selected printer queue does not exist.'
 DEVICE_URI=$(/usr/bin/lpstat -v "$QUEUE" | /usr/bin/sed -n 's/^device for [^:]*: //p')
 case "$DEVICE_URI" in usb://*) ;; *) fail 'the selected queue is not a USB printer queue.' ;; esac
-printf '%s' "$DEVICE_URI" | /usr/bin/grep -Eiq 'laserjet(%20|[ +])?1020' || fail 'the selected queue does not appear to target an HP LaserJet 1020.'
+printf '%s' "$DEVICE_URI" | /usr/bin/grep -Eiq "$USB_MATCH" || fail 'the selected queue does not appear to target a supported printer.'
 ACTUAL=$(/usr/bin/shasum -a 256 "$SOURCE" | /usr/bin/awk '{print $1}')
 [ "$ACTUAL" = "$EXPECTED_SHA256" ] || fail 'the selected firmware file does not match the reviewed firmware checksum. No file was installed.'
 [ -f "$BASE/queues/$QUEUE.conf" ] || fail "the selected queue is not managed by this candidate installer."
@@ -64,7 +70,11 @@ trap 'rm -f "$TMP_PLIST"' EXIT HUP INT TERM
 "<string>$FIRMWARE_XML</string>" \
 '</array>' \
 '<key>RunAtLoad</key><true/>' \
-'<key>KeepAlive</key><true/>' \
+'<key>LaunchEvents</key><dict><key>com.apple.iokit.matching</key><dict><key>com.hp-legacy-mac-plus.usb</key><dict>' \
+'<key>IOProviderClass</key><string>IOUSBHostDevice</string>' \
+'<key>idVendor</key><integer>1008</integer>' \
+'<key>IOMatchLaunchStream</key><true/>' \
+'</dict></dict></dict>' \
 '<key>StandardOutPath</key><string>/var/log/hp-legacy-mac-plus-firmware.log</string>' \
 '<key>StandardErrorPath</key><string>/var/log/hp-legacy-mac-plus-firmware.log</string>' \
 '</dict></plist>' > "$TMP_PLIST"

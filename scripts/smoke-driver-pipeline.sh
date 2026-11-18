@@ -50,7 +50,7 @@ run_case() { # name input wrapper-args...
   printf 'Pipeline case %s: %s bytes of ZjStream data.\n' "$name" "$size"
   SIZE=$size
 }
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 CLIP="$BUNDLE/bin/hp1020-clip"
 [ -x "$CLIP" ] || CLIP="$ROOT/src/hp1020-clip"
 # 1. Original arguments (wrapper default crop).

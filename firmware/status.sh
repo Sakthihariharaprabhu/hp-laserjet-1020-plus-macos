@@ -5,8 +5,10 @@
 set -u
 BASE=/Library/Printers/hp-legacy-mac-plus
 FILTER=/usr/libexec/cups/filter/hp-legacy-mac-plus
-FIRMWARE="$BASE/firmware/sihp1020.dl"
-EXPECTED_SHA256=c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01
+MODEL_CONF="$BASE/models/hp1020.conf"
+FIRMWARE_FILE=$(/bin/sh "$BASE/bin/model-get" "$MODEL_CONF" FIRMWARE_FILE 2>/dev/null || echo sihp1020.dl)
+FIRMWARE="$BASE/firmware/$FIRMWARE_FILE"
+EXPECTED_SHA256=$(/bin/sh "$BASE/bin/model-get" "$MODEL_CONF" FIRMWARE_SHA256 2>/dev/null || echo unknown)
 OK='✅'
 NO='❌'
 MAYBE='⚠️'

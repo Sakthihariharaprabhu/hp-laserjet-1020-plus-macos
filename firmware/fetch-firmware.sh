@@ -18,12 +18,17 @@
 set -eu
 umask 077
 
-EXPECTED_SHA256=c14fdf0af84d1df40545eef7c7d4e2e07dd58fe933e14cc7c29697209e87cd01
-SOURCES='
-dl|GitHub Release (this project)|https://github.com/Sakthihariharaprabhu/hp-laserjet-1020-plus-macos/releases/download/firmware-hp1020/sihp1020.dl
-'
-HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HERE=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 ARM2HPDL="$HERE/arm2hpdl"
+# The model definition is the single source of truth for checksum and URL.
+MODEL_CONF="$HERE/models/hp1020.conf"
+MODEL_GET="$HERE/model-get"
+EXPECTED_SHA256=$(/bin/sh "$MODEL_GET" "$MODEL_CONF" FIRMWARE_SHA256) || { echo 'Firmware definition is missing or invalid.' >&2; exit 1; }
+FIRMWARE_FILE=$(/bin/sh "$MODEL_GET" "$MODEL_CONF" FIRMWARE_FILE) || { echo 'Firmware definition is missing or invalid.' >&2; exit 1; }
+FIRMWARE_URL=$(/bin/sh "$MODEL_GET" "$MODEL_CONF" FIRMWARE_URL) || { echo 'Firmware definition is missing or invalid.' >&2; exit 1; }
+SOURCES="
+dl|GitHub Release (this project)|$FIRMWARE_URL
+"
 
 fail() { printf '%s\n' "$*" >&2; exit 1; }
 [ "$#" -eq 0 ] || fail 'This helper takes no arguments.'
@@ -34,6 +39,7 @@ done
 TMPROOT=${TMPDIR:-/tmp}
 WORK=$(/usr/bin/mktemp -d "$TMPROOT/hp1020-firmware.XXXXXX")
 /bin/chmod 700 "$WORK"
+# shellcheck disable=SC2329  # runs through the EXIT trap
 cleanup_on_error() {
   result=$?
   if [ "$result" -ne 0 ]; then /bin/rm -rf "$WORK"; fi
@@ -41,7 +47,7 @@ cleanup_on_error() {
 trap cleanup_on_error EXIT
 trap 'exit 1' HUP INT TERM
 
-DL="$WORK/sihp1020.dl"
+DL="$WORK/$FIRMWARE_FILE"
 REPORT=
 note() { REPORT="${REPORT}
 - $1: $2"; }

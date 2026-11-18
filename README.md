@@ -32,7 +32,27 @@ The installer does not overwrite an older installation. First remove it: **HP La
 
 ### Uninstall
 
-Open **HP LaserJet Firmware Setup → Uninstall Driver** → choose the printer → **Remove**. This removes the printer queue, the firmware service and the driver files. Other printers and older HP drivers are left alone. Then drag the app to the Trash.
+Open **HP LaserJet Firmware Setup → Uninstall Driver** → choose the printer → **Remove**. This removes the printer queue, the firmware service, the driver files, the log file, the installer record and the helper app itself. Other printers and older HP drivers are left alone.
+
+If the app is gone or will not open, run this in Terminal instead (it asks for your password and for the queue name):
+
+```bash
+sudo sh "/Applications/HP LaserJet Firmware Setup.app/Contents/Resources/uninstall.sh"
+```
+
+---
+
+### If something fails: what to do
+
+| What happened | What to do |
+|---|---|
+| Installer says "The installation failed" | Switch the printer on, connect it by USB, wait 10 seconds and run the installer again. Nothing is left half-installed. |
+| Firmware download failed | Download `sihp1020.dl` from the [firmware release](https://github.com/Sakthihariharaprabhu/hp-laserjet-1020-plus-macos/releases/tag/firmware-hp1020) in a browser, then in the app choose **Select an existing firmware file**. |
+| Printer prints nothing after switching on | App → **Check Status**. If firmware is missing, run **Set Up Firmware**. |
+| Page is shifted or cut off | App → **Print Alignment Test Page**, then **Adjust Print Position**. |
+| Nothing helps | App → **Uninstall Driver**, restart the Mac, install again. Then open an [issue](https://github.com/Sakthihariharaprabhu/hp-laserjet-1020-plus-macos/issues/new?template=printer-problem.yml) with the **Check Status** text (it contains no serial numbers). |
+
+---
 
 ### Optional: check the download
 
@@ -117,12 +137,18 @@ Firmware was probably never set up (the first page can work because another driv
 
 ---
 
+## Trademarks and licence
+
+This is an independent community project. It is **not affiliated with, sponsored by or endorsed by HP Inc.** "HP", "LaserJet" and related names are trademarks of their owners and are used only to say which printers the software works with. HP's firmware is HP's property; this project does not include it in the code or the installer. See [NOTICE.md](NOTICE.md) for third-party software and firmware notices.
+
+---
+
 ## For maintainers
 
 Everything below is for people building or reviewing the project.
 
 - Build status and evidence: [BUILD-STATUS.md](BUILD-STATUS.md) · Tester guide: [TESTING.md](TESTING.md) · [Roadmap](ROADMAP.md)
-- [Security notes](docs/SECURITY.md) · [Firmware workflow](docs/FIRMWARE-WORKFLOW.md) · [Release checklist](docs/RELEASE-CHECKLIST.md) · [Build and signing](docs/BUILD-AND-SIGNING.md) · [Upstreams](UPSTREAMS.md)
+- [Adding another printer model](docs/ADDING-A-MODEL.md) · [Security notes](docs/SECURITY.md) · [Firmware workflow](docs/FIRMWARE-WORKFLOW.md) · [Release checklist](docs/RELEASE-CHECKLIST.md) · [Build and signing](docs/BUILD-AND-SIGNING.md) · [Upstreams](UPSTREAMS.md)
 
 ### How it works
 
